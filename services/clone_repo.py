@@ -1,4 +1,5 @@
 import os
+import stat
 import shutil
 from pathlib import Path
 from typing import Optional
@@ -8,6 +9,14 @@ from utils.helper import extract_repo_name
 
 
 REPOS_DIR = Path("repos")
+
+
+def _remove_existing_repo(path: Path) -> None:
+    def make_writable(func, failed_path, error):
+        os.chmod(failed_path, stat.S_IWRITE)
+        func(failed_path)
+
+    shutil.rmtree(path, onerror=make_writable)
 
 
 def get_repo_local_path(repo_url: str) -> Path:
@@ -22,7 +31,7 @@ def clone_repository(repo_url: str, progress_callback=None) -> tuple[bool, str, 
         local_path = REPOS_DIR / repo_name
 
         if local_path.exists():
-            shutil.rmtree(local_path)
+            _remove_existing_repo(local_path)
 
         class CloneProgress(git.RemoteProgress):
             def update(self, op_code, cur_count, max_count=None, message=""):

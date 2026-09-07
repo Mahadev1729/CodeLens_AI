@@ -1,26 +1,29 @@
+from utils.helper import (
+    get_language, get_file_size_str, safe_read_file,
+    extract_repo_name, build_folder_tree, truncate_text,
+)
+from services.readme_generator import generate_readme
+from services.architecture import generate_architecture, extract_mermaid_diagram
+from services.bugfinder import find_bugs, parse_bugs
+from services.summary import generate_summary
+from services.rag import ask_question, explain_file
+from services.vectorstore import build_vectorstore, load_vectorstore, vectorstore_exists
+from services.chunker import chunk_documents
+from services.loader import load_documents, get_repository_stats
+from services.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
 import os
+import queue
 import sys
 from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv()
+PROJECT_DIR = Path(__file__).resolve().parent
+load_dotenv(dotenv_path=PROJECT_DIR / ".env")
+if not os.getenv("GROQ_API_KEY") and os.getenv("\ufeffGROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = os.environ["\ufeffGROQ_API_KEY"]
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-from services.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
-from services.loader import load_documents, get_repository_stats
-from services.chunker import chunk_documents
-from services.vectorstore import build_vectorstore, load_vectorstore, vectorstore_exists
-from services.rag import ask_question, explain_file
-from services.summary import generate_summary
-from services.bugfinder import find_bugs, parse_bugs
-from services.architecture import generate_architecture, extract_mermaid_diagram
-from services.readme_generator import generate_readme
-from utils.helper import (
-    get_language, get_file_size_str, safe_read_file,
-    extract_repo_name, build_folder_tree, truncate_text,
-)
+sys.path.insert(0, str(PROJECT_DIR))
 
 
 st.set_page_config(
@@ -574,11 +577,14 @@ def render_sidebar():
 
     if st.session_state.groq_api_key:
         if validate_api_key(st.session_state.groq_api_key):
-            st.sidebar.markdown('<div class="status-badge status-ready">✓ API Key Configured</div>', unsafe_allow_html=True)
+            st.sidebar.markdown(
+                '<div class="status-badge status-ready">✓ API Key Configured</div>', unsafe_allow_html=True)
         else:
-            st.sidebar.markdown('<div class="status-badge status-error">⚠ Invalid API Key Format</div>', unsafe_allow_html=True)
+            st.sidebar.markdown(
+                '<div class="status-badge status-error">⚠ Invalid API Key Format</div>', unsafe_allow_html=True)
     else:
-        st.sidebar.markdown('<div class="status-badge status-pending">○ API Key Required</div>', unsafe_allow_html=True)
+        st.sidebar.markdown(
+            '<div class="status-badge status-pending">○ API Key Required</div>', unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -592,9 +598,11 @@ def render_sidebar():
 
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        clone_btn = st.button("⬇ Clone", use_container_width=True, key="clone_btn")
+        clone_btn = st.button(
+            "⬇ Clone", use_container_width=True, key="clone_btn")
     with col2:
-        build_btn = st.button("⚡ Build KB", use_container_width=True, key="build_btn")
+        build_btn = st.button(
+            "⚡ Build KB", use_container_width=True, key="build_btn")
 
     if clone_btn:
         handle_clone(repo_url)
@@ -623,13 +631,16 @@ def render_sidebar():
         """, unsafe_allow_html=True)
 
         if st.session_state.knowledge_base_built:
-            st.sidebar.markdown('<div class="status-badge status-ready">⚡ Knowledge Base Ready</div>', unsafe_allow_html=True)
+            st.sidebar.markdown(
+                '<div class="status-badge status-ready">⚡ Knowledge Base Ready</div>', unsafe_allow_html=True)
         else:
-            st.sidebar.markdown('<div class="status-badge status-pending">○ Knowledge Base Not Built</div>', unsafe_allow_html=True)
+            st.sidebar.markdown(
+                '<div class="status-badge status-pending">○ Knowledge Base Not Built</div>', unsafe_allow_html=True)
 
         if st.session_state.repo_stats:
             stats = st.session_state.repo_stats
-            st.sidebar.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+            st.sidebar.markdown(
+                '<div class="divider"></div>', unsafe_allow_html=True)
             st.sidebar.markdown("### 📈 Repository Statistics")
             st.sidebar.markdown(f"""
             <div class="metric-card">
@@ -644,11 +655,14 @@ def render_sidebar():
 
             ext_counts = stats.get("extension_counts", {})
             if ext_counts:
-                top_exts = sorted(ext_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-                ext_text = " · ".join([f"`{ext}` ×{cnt}" for ext, cnt in top_exts])
+                top_exts = sorted(ext_counts.items(),
+                                  key=lambda x: x[1], reverse=True)[:5]
+                ext_text = " · ".join(
+                    [f"`{ext}` ×{cnt}" for ext, cnt in top_exts])
                 st.sidebar.markdown(f"**Languages:** {ext_text}")
     else:
-        st.sidebar.markdown('<div class="status-badge status-pending">○ No Repository Loaded</div>', unsafe_allow_html=True)
+        st.sidebar.markdown(
+            '<div class="status-badge status-pending">○ No Repository Loaded</div>', unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.sidebar.markdown("### ⚙️ Model")
@@ -672,14 +686,25 @@ def handle_clone(repo_url: str):
         st.sidebar.error("Please enter a repository URL.")
         return
     if not (repo_url.startswith("https://github.com/") or repo_url.startswith("http://github.com/")):
-        st.sidebar.error("Only GitHub URLs are supported (must start with https://github.com/).")
+        st.sidebar.error(
+            "Only GitHub URLs are supported (must start with https://github.com/).")
         return
 
     with st.sidebar.status("Cloning repository...", expanded=True) as status:
-        def progress_cb(pct, msg):
-            status.write(f"Progress: {pct}% - {msg}")
+        progress_messages = queue.Queue()
 
-        success, local_path, error = clone_repository(repo_url.strip(), progress_callback=progress_cb)
+        def progress_cb(pct, msg):
+            progress_messages.put((pct, msg))
+
+        success, local_path, error = clone_repository(
+            repo_url.strip(), progress_callback=progress_cb)
+
+        while True:
+            try:
+                pct, msg = progress_messages.get_nowait()
+            except queue.Empty:
+                break
+            status.write(f"Progress: {pct}% - {msg}")
 
         if success:
             repo_name = extract_repo_name(repo_url.strip())
@@ -702,11 +727,14 @@ def handle_clone(repo_url: str):
                 if vs:
                     st.session_state.vectorstore = vs
                     st.session_state.knowledge_base_built = True
-                    status.update(label="✅ Repository cloned! Existing knowledge base loaded.", state="complete")
+                    status.update(
+                        label="✅ Repository cloned! Existing knowledge base loaded.", state="complete")
                 else:
-                    status.update(label="✅ Repository cloned! Build the knowledge base to enable chat.", state="complete")
+                    status.update(
+                        label="✅ Repository cloned! Build the knowledge base to enable chat.", state="complete")
             else:
-                status.update(label="✅ Repository cloned! Build the knowledge base to enable chat.", state="complete")
+                status.update(
+                    label="✅ Repository cloned! Build the knowledge base to enable chat.", state="complete")
         else:
             status.update(label=f"❌ Clone failed: {error}", state="error")
 
@@ -725,13 +753,15 @@ def handle_build_knowledge_base():
             documents, skipped = load_documents(st.session_state.repo_path)
 
             if not documents:
-                status.update(label="❌ No supported files found in repository.", state="error")
+                status.update(
+                    label="❌ No supported files found in repository.", state="error")
                 return
 
             status.write(f"📄 Loaded {len(documents)} files. Chunking...")
             chunks = chunk_documents(documents)
 
-            status.write(f"🔪 Created {len(chunks)} chunks. Building embeddings...")
+            status.write(
+                f"🔪 Created {len(chunks)} chunks. Building embeddings...")
             vectorstore = build_vectorstore(chunks, st.session_state.repo_name)
 
             st.session_state.vectorstore = vectorstore
@@ -746,7 +776,8 @@ def handle_build_knowledge_base():
             )
 
             if skipped:
-                status.write(f"⚠️ Skipped {len(skipped)} large/unreadable files.")
+                status.write(
+                    f"⚠️ Skipped {len(skipped)} large/unreadable files.")
 
         except Exception as e:
             status.update(label=f"❌ Error: {str(e)}", state="error")
@@ -765,7 +796,8 @@ def render_chat_tab():
 
     col1, col2 = st.columns([6, 1])
     with col1:
-        st.markdown('<div class="section-header"><h3>💬 Chat with your Codebase</h3></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-header"><h3>💬 Chat with your Codebase</h3></div>', unsafe_allow_html=True)
     with col2:
         if st.button("🗑 Clear", key="clear_chat", use_container_width=True):
             st.session_state.chat_history = []
@@ -786,7 +818,8 @@ def render_chat_tab():
         for i, q in enumerate(suggested_questions):
             with cols[i % 3]:
                 if st.button(q, key=f"suggest_{i}", use_container_width=True):
-                    st.session_state.chat_history.append({"role": "user", "content": q})
+                    st.session_state.chat_history.append(
+                        {"role": "user", "content": q})
                     with st.spinner("Thinking..."):
                         try:
                             answer, sources = ask_question(
@@ -829,7 +862,8 @@ def render_chat_tab():
         placeholder="Ask anything about the codebase...",
         key="chat_input_main",
     ):
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        st.session_state.chat_history.append(
+            {"role": "user", "content": user_input})
         with st.chat_message("user", avatar="👤"):
             st.write(user_input)
 
@@ -841,7 +875,8 @@ def render_chat_tab():
                         user_input,
                         st.session_state.groq_api_key,
                         st.session_state.chat_history[:-1],
-                        st.session_state.get("selected_model", "openai/gpt-oss-20b"),
+                        st.session_state.get(
+                            "selected_model", "openai/gpt-oss-20b"),
                     )
                     st.markdown(answer)
                     if sources:
@@ -867,7 +902,8 @@ def render_chat_tab():
 
 
 def render_summary_tab():
-    st.markdown('<div class="section-header"><h3>📋 Repository Summary</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>📋 Repository Summary</h3></div>',
+                unsafe_allow_html=True)
 
     if not st.session_state.repo_path:
         st.markdown("""
@@ -885,7 +921,8 @@ def render_summary_tab():
 
     col1, col2 = st.columns([3, 1])
     with col2:
-        regen = st.button("🔄 Regenerate", key="regen_summary", use_container_width=True)
+        regen = st.button("🔄 Regenerate", key="regen_summary",
+                          use_container_width=True)
 
     if st.session_state.summary_cache and not regen:
         st.markdown(st.session_state.summary_cache)
@@ -907,7 +944,8 @@ def render_summary_tab():
 
 
 def render_bugs_tab():
-    st.markdown('<div class="section-header"><h3>🐛 Bug Finder & Code Analysis</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>🐛 Bug Finder & Code Analysis</h3></div>',
+                unsafe_allow_html=True)
 
     if not st.session_state.repo_path:
         st.markdown("""
@@ -925,14 +963,16 @@ def render_bugs_tab():
 
     col1, col2 = st.columns([3, 1])
     with col2:
-        regen = st.button("🔄 Re-analyze", key="regen_bugs", use_container_width=True)
+        regen = st.button("🔄 Re-analyze", key="regen_bugs",
+                          use_container_width=True)
 
     if st.session_state.bug_cache and not regen:
         bug_report = st.session_state.bug_cache
         issues = parse_bugs(bug_report)
 
         high = [i for i in issues if i.get("severity", "").lower() == "high"]
-        medium = [i for i in issues if i.get("severity", "").lower() == "medium"]
+        medium = [i for i in issues if i.get(
+            "severity", "").lower() == "medium"]
         low = [i for i in issues if i.get("severity", "").lower() == "low"]
 
         col1, col2, col3, col4 = st.columns(4)
@@ -984,7 +1024,8 @@ def render_bugs_tab():
 
 
 def render_architecture_tab():
-    st.markdown('<div class="section-header"><h3>🏗️ Architecture Diagram</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>🏗️ Architecture Diagram</h3></div>',
+                unsafe_allow_html=True)
 
     if not st.session_state.repo_path:
         st.markdown("""
@@ -1002,7 +1043,8 @@ def render_architecture_tab():
 
     col1, col2 = st.columns([3, 1])
     with col2:
-        regen = st.button("🔄 Regenerate", key="regen_arch", use_container_width=True)
+        regen = st.button("🔄 Regenerate", key="regen_arch",
+                          use_container_width=True)
 
     if st.session_state.architecture_cache and not regen:
         arch_text = st.session_state.architecture_cache
@@ -1010,7 +1052,8 @@ def render_architecture_tab():
 
         if diagram_code:
             st.markdown("### Mermaid Diagram Code")
-            st.info("💡 Copy the diagram code below and paste it into [Mermaid Live Editor](https://mermaid.live) to view the rendered diagram.")
+            st.info(
+                "💡 Copy the diagram code below and paste it into [Mermaid Live Editor](https://mermaid.live) to view the rendered diagram.")
             st.markdown(f"""
             <div class="mermaid-container">```mermaid\n{diagram_code}\n```</div>
             """, unsafe_allow_html=True)
@@ -1041,7 +1084,8 @@ def render_architecture_tab():
 
 
 def render_readme_tab():
-    st.markdown('<div class="section-header"><h3>📝 README Generator</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>📝 README Generator</h3></div>',
+                unsafe_allow_html=True)
 
     if not st.session_state.repo_path:
         st.markdown("""
@@ -1059,7 +1103,8 @@ def render_readme_tab():
 
     col1, col2, col3 = st.columns([3, 1, 1])
     with col2:
-        regen = st.button("🔄 Regenerate", key="regen_readme", use_container_width=True)
+        regen = st.button("🔄 Regenerate", key="regen_readme",
+                          use_container_width=True)
 
     if st.session_state.readme_cache:
         with col3:
@@ -1096,7 +1141,8 @@ def render_readme_tab():
 
 
 def render_file_explorer_tab():
-    st.markdown('<div class="section-header"><h3>📁 File Explorer</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>📁 File Explorer</h3></div>',
+                unsafe_allow_html=True)
 
     if not st.session_state.repo_path or not is_valid_repo_path(st.session_state.repo_path):
         st.markdown("""
@@ -1143,7 +1189,8 @@ def render_file_explorer_tab():
             label_visibility="collapsed",
         )
         if ext_filter != "All":
-            filtered_files = [f for f in filtered_files if f["extension"] == ext_filter]
+            filtered_files = [
+                f for f in filtered_files if f["extension"] == ext_filter]
 
         st.markdown(f"*{len(filtered_files)} files*")
 
@@ -1161,9 +1208,11 @@ def render_file_explorer_tab():
 
     with col_viewer:
         if st.session_state.selected_file:
-            file_path_full = Path(st.session_state.repo_path) / st.session_state.selected_file
+            file_path_full = Path(st.session_state.repo_path) / \
+                st.session_state.selected_file
             file_info_sel = next(
-                (f for f in file_list if f["path"] == st.session_state.selected_file),
+                (f for f in file_list if f["path"]
+                 == st.session_state.selected_file),
                 None,
             )
 
@@ -1185,7 +1234,8 @@ def render_file_explorer_tab():
 
                 with tab_explain:
                     if not st.session_state.groq_api_key or not validate_api_key(st.session_state.groq_api_key):
-                        st.error("Please enter a valid Groq API key to get AI explanations.")
+                        st.error(
+                            "Please enter a valid Groq API key to get AI explanations.")
                     else:
                         explain_key = f"explain_{st.session_state.selected_file}"
                         if explain_key not in st.session_state:
@@ -1209,7 +1259,8 @@ def render_file_explorer_tab():
                         if st.session_state.get(explain_key):
                             st.markdown(st.session_state[explain_key])
             else:
-                st.warning("Could not read file content (file may be too large or unreadable).")
+                st.warning(
+                    "Could not read file content (file may be too large or unreadable).")
         else:
             st.markdown("""
             <div class="empty-state">
@@ -1283,12 +1334,16 @@ def main():
 
         col1, col2, col3 = st.columns(3)
         features = [
-            ("💬", "Chat with Code", "Ask questions about any part of the codebase in natural language"),
-            ("📋", "Repository Summary", "Get an instant overview of the project architecture and tech stack"),
+            ("💬", "Chat with Code",
+             "Ask questions about any part of the codebase in natural language"),
+            ("📋", "Repository Summary",
+             "Get an instant overview of the project architecture and tech stack"),
             ("🐛", "Bug Finder", "Detect security issues, code smells, and quality problems"),
-            ("🏗️", "Architecture Diagram", "Generate Mermaid diagrams of system architecture"),
+            ("🏗️", "Architecture Diagram",
+             "Generate Mermaid diagrams of system architecture"),
             ("📝", "README Generator", "Auto-generate professional README documentation"),
-            ("📁", "File Explorer", "Browse files with syntax highlighting and AI explanations"),
+            ("📁", "File Explorer",
+             "Browse files with syntax highlighting and AI explanations"),
         ]
         for i, (icon, title, desc) in enumerate(features):
             with [col1, col2, col3][i % 3]:
