@@ -46,7 +46,7 @@ flowchart TD
 def generate_architecture(
     repo_path: str,
     api_key: str,
-    model: str = "openai/gpt-oss-20b",
+    model: str = "llama-3.1-8b-instant",
 ) -> str:
     repo_name = Path(repo_path).name
     folder_tree = build_folder_tree(repo_path, max_depth=4)
@@ -57,8 +57,10 @@ def generate_architecture(
 
     priority_extensions = {".py", ".js", ".ts", ".java", ".go", ".rs", ".cs"}
     all_files = list(iter_source_files(repo_path))
-    priority_files = [f for f in all_files if f.suffix.lower() in priority_extensions]
-    other_files = [f for f in all_files if f.suffix.lower() not in priority_extensions]
+    priority_files = [f for f in all_files if f.suffix.lower()
+                      in priority_extensions]
+    other_files = [f for f in all_files if f.suffix.lower()
+                   not in priority_extensions]
     ordered_files = priority_files + other_files
 
     for file_path in ordered_files:
@@ -74,14 +76,16 @@ def generate_architecture(
         key_files_parts.append(part)
         total_chars += len(part)
 
-    key_files = "\n\n".join(key_files_parts) if key_files_parts else "No files found."
+    key_files = "\n\n".join(
+        key_files_parts) if key_files_parts else "No files found."
     prompt = ARCHITECTURE_PROMPT.format(
         repo_name=repo_name,
         folder_tree=folder_tree,
         key_files=key_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model, temperature=0.1, max_tokens=4096)
+    llm = ChatGroq(api_key=api_key, model=model,
+                   temperature=0.1, max_tokens=4096)
     response = llm.invoke([HumanMessage(content=prompt)])
     return response.content
 

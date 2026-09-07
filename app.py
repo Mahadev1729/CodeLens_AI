@@ -673,15 +673,15 @@ def render_sidebar():
     st.sidebar.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.sidebar.markdown("### ⚙️ Model")
     model_options = [
-        "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
-        "mixtral-8x7b-32768",
         "gemma2-9b-it",
-        "openai/gpt-oss-20b"
+        "mixtral-8x7b-32768",
+        "openai/gpt-oss-20b",
     ]
     selected_model = st.sidebar.selectbox(
         "LLM Model",
         options=model_options,
+        index=0,
         key="selected_model",
         label_visibility="collapsed",
     )
@@ -834,7 +834,7 @@ def render_chat_tab():
                                 st.session_state.groq_api_key,
                                 st.session_state.chat_history[:-1],
                                 st.session_state.get(
-                                    "selected_model", "openai/gpt-oss-20b"),
+                                    "selected_model", "llama-3.1-8b-instant"),
                             )
                             st.session_state.chat_history.append({
                                 "role": "assistant",
@@ -882,7 +882,7 @@ def render_chat_tab():
                         st.session_state.groq_api_key,
                         st.session_state.chat_history[:-1],
                         st.session_state.get(
-                            "selected_model", "openai/gpt-oss-20b"),
+                            "selected_model", "llama-3.1-8b-instant"),
                     )
                     st.markdown(answer)
                     if sources:

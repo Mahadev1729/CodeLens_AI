@@ -35,10 +35,15 @@ Provide a comprehensive answer with the following structure:
 Answer:"""
 
 
-def get_llm(api_key: str, model: str = "openai/gpt-oss-20b") -> ChatGroq:
+DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
+
+
+def get_llm(api_key: str, model: str = DEFAULT_GROQ_MODEL) -> ChatGroq:
+    safe_model = model if model in {
+        "llama-3.1-8b-instant", "gemma2-9b-it", "mixtral-8x7b-32768"} else DEFAULT_GROQ_MODEL
     return ChatGroq(
         api_key=api_key,
-        model=model,
+        model=safe_model,
         temperature=0.2,
         max_tokens=4096,
     )
@@ -46,12 +51,14 @@ def get_llm(api_key: str, model: str = "openai/gpt-oss-20b") -> ChatGroq:
 
 def retrieve_context(vectorstore: FAISS, query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
     results = vectorstore.similarity_search(query, k=top_k)
-    source_files = list({doc.metadata.get("source", "unknown") for doc in results})
+    source_files = list({doc.metadata.get("source", "unknown")
+                        for doc in results})
     context_parts = []
     for doc in results:
         source = doc.metadata.get("source", "unknown")
         language = doc.metadata.get("language", "text")
-        context_parts.append(f"File: {source}\n```{language}\n{doc.page_content}\n```")
+        context_parts.append(
+            f"File: {source}\n```{language}\n{doc.page_content}\n```")
     context = "\n\n---\n\n".join(context_parts)
     return context, source_files
 
@@ -61,7 +68,7 @@ def ask_question(
     question: str,
     api_key: str,
     chat_history: list[dict] = None,
-    model: str = "openai/gpt-oss-20b",
+    model: str = DEFAULT_GROQ_MODEL,
 ) -> tuple[str, list[str]]:
     llm = get_llm(api_key, model)
     context, source_files = retrieve_context(vectorstore, question)
@@ -75,7 +82,8 @@ def ask_question(
             content = msg.get("content", "")[:500]
             history_lines.append(f"{role.capitalize()}: {content}")
         if history_lines:
-            history_text = "\n\nChat History (recent):\n" + "\n".join(history_lines)
+            history_text = "\n\nChat History (recent):\n" + \
+                "\n".join(history_lines)
 
     prompt_text = RAG_PROMPT_TEMPLATE + history_text
     prompt = PromptTemplate(
@@ -91,11 +99,12 @@ def explain_file(
     file_path: str,
     file_content: str,
     api_key: str,
-    model: str = "openai/gpt-oss-20b",
+    model: str = DEFAULT_GROQ_MODEL,
 ) -> str:
     llm = get_llm(api_key, model)
     language = file_path.split(".")[-1] if "." in file_path else "text"
-    truncated = file_content[:6000] if len(file_content) > 6000 else file_content
+    truncated = file_content[:6000] if len(
+        file_content) > 6000 else file_content
 
     prompt = f"""You are an expert software engineer. Analyze the following source file and provide a comprehensive explanation.
 

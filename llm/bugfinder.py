@@ -51,7 +51,7 @@ After listing all issues, provide:
 def find_bugs(
     repo_path: str,
     api_key: str,
-    model: str = "openai/gpt-oss-20b",
+    model: str = "llama-3.1-8b-instant",
 ) -> str:
     repo_name = Path(repo_path).name
     file_contents_parts = []
@@ -80,7 +80,8 @@ def find_bugs(
         file_contents=file_contents,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model, temperature=0.0, max_tokens=4096)
+    llm = ChatGroq(api_key=api_key, model=model,
+                   temperature=0.0, max_tokens=4096)
     response = llm.invoke([HumanMessage(content=prompt)])
     return response.content
 
@@ -104,7 +105,8 @@ def parse_bugs(bug_report: str) -> list[dict]:
             elif line.startswith("**Category:**"):
                 issue["category"] = line.replace("**Category:**", "").strip()
             elif line.startswith("**Description:**"):
-                issue["description"] = line.replace("**Description:**", "").strip()
+                issue["description"] = line.replace(
+                    "**Description:**", "").strip()
             elif line.startswith("**Fix:**"):
                 issue["fix"] = line.replace("**Fix:**", "").strip()
         if issue.get("title"):

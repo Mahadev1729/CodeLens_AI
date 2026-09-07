@@ -59,7 +59,7 @@ Output ONLY the README.md content, starting with the # heading. Do not include a
 def generate_readme(
     repo_path: str,
     api_key: str,
-    model: str = "openai/gpt-oss-20b",
+    model: str = "llama-3.1-8b-instant",
 ) -> str:
     repo_name = Path(repo_path).name
     folder_tree = build_folder_tree(repo_path, max_depth=4)
@@ -93,13 +93,15 @@ def generate_readme(
         key_files_parts.append(part)
         total_chars += len(part)
 
-    key_files = "\n\n".join(key_files_parts) if key_files_parts else "No files found."
+    key_files = "\n\n".join(
+        key_files_parts) if key_files_parts else "No files found."
     prompt = README_PROMPT.format(
         repo_name=repo_name,
         folder_tree=folder_tree,
         key_files=key_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model, temperature=0.3, max_tokens=4096)
+    llm = ChatGroq(api_key=api_key, model=model,
+                   temperature=0.3, max_tokens=4096)
     response = llm.invoke([HumanMessage(content=prompt)])
     return response.content

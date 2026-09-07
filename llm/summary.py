@@ -51,7 +51,7 @@ Generate a detailed summary with these exact sections:
 def generate_summary(
     repo_path: str,
     api_key: str,
-    model: str = "openai/gpt-oss-20b",
+    model: str = "llama-3.1-8b-instant",
 ) -> str:
     repo_name = Path(repo_path).name
     folder_tree = build_folder_tree(repo_path, max_depth=4)
@@ -70,7 +70,8 @@ def generate_summary(
             )
             count += 1
 
-    sample_files = "\n\n".join(sample_files_parts) if sample_files_parts else "No readable files found."
+    sample_files = "\n\n".join(
+        sample_files_parts) if sample_files_parts else "No readable files found."
 
     prompt = SUMMARY_PROMPT.format(
         repo_name=repo_name,
@@ -78,6 +79,7 @@ def generate_summary(
         sample_files=sample_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model, temperature=0.1, max_tokens=4096)
+    llm = ChatGroq(api_key=api_key, model=model,
+                   temperature=0.1, max_tokens=4096)
     response = llm.invoke([HumanMessage(content=prompt)])
     return response.content
