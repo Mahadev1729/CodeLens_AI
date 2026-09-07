@@ -671,20 +671,6 @@ def render_sidebar():
             '<div class="status-badge status-pending">○ No Repository Loaded</div>', unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.sidebar.markdown("### ⚙️ Model")
-    model_options = [
-        "llama-3.1-8b-instant",
-        "gemma2-9b-it",
-        "mixtral-8x7b-32768",
-        "openai/gpt-oss-20b",
-    ]
-    selected_model = st.sidebar.selectbox(
-        "LLM Model",
-        options=model_options,
-        index=0,
-        key="selected_model",
-        label_visibility="collapsed",
-    )
 
 
 def handle_clone(repo_url: str):
