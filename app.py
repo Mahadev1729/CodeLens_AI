@@ -530,6 +530,10 @@ div[data-testid="stExpander"] summary {
 
 
 def init_session_state():
+    default_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not default_api_key:
+        default_api_key = os.getenv("\ufeffGROQ_API_KEY", "").strip()
+
     defaults = {
         "chat_history": [],
         "repo_path": None,
@@ -537,7 +541,7 @@ def init_session_state():
         "vectorstore": None,
         "repo_stats": None,
         "selected_file": None,
-        "groq_api_key": os.getenv("GROQ_API_KEY", ""),
+        "groq_api_key": default_api_key,
         "knowledge_base_built": False,
         "clone_in_progress": False,
         "summary_cache": None,
@@ -564,6 +568,8 @@ def render_sidebar():
     """, unsafe_allow_html=True)
 
     st.sidebar.markdown("### 🔑 API Configuration")
+    st.sidebar.caption(
+        "Default key is loaded from your environment; enter your own key anytime to override it.")
     api_key = st.sidebar.text_input(
         "Groq API Key",
         value=st.session_state.groq_api_key,
@@ -572,7 +578,7 @@ def render_sidebar():
         key="api_key_input",
         label_visibility="collapsed",
     )
-    if api_key:
+    if api_key and api_key != st.session_state.groq_api_key:
         st.session_state.groq_api_key = api_key
 
     if st.session_state.groq_api_key:
