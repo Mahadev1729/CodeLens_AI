@@ -11,6 +11,7 @@ from services.vectorstore import build_vectorstore, load_vectorstore, vectorstor
 from services.chunker import chunk_documents
 from services.loader import load_documents, get_repository_stats
 from services.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
+from utils.persistence import clear_chat_history, load_persisted_session_state, save_persisted_session_state
 import os
 import queue
 import sys
@@ -548,10 +549,48 @@ def init_session_state():
         "bug_cache": None,
         "architecture_cache": None,
         "readme_cache": None,
+        "selected_model": "llama-3.1-8b-instant",
     }
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
+
+    persisted_state = load_persisted_session_state(PROJECT_DIR)
+    for key, val in persisted_state.items():
+        if key not in st.session_state or st.session_state[key] is None:
+            st.session_state[key] = val
+
+    if st.session_state.get("repo_path") and st.session_state.get("knowledge_base_built"):
+        repo_name = st.session_state.get("repo_name") or Path(
+            st.session_state["repo_path"]).name
+        if repo_name:
+            from services.vectorstore import load_vectorstore, vectorstore_exists
+            if vectorstore_exists(repo_name):
+                stored_vector = load_vectorstore(repo_name)
+                if stored_vector is not None:
+                    st.session_state.vectorstore = stored_vector
+
+
+def persist_session_state():
+    serializable_state = {
+        key: st.session_state.get(key)
+        for key in [
+            "chat_history",
+            "repo_path",
+            "repo_name",
+            "repo_stats",
+            "selected_file",
+            "groq_api_key",
+            "knowledge_base_built",
+            "summary_cache",
+            "bug_cache",
+            "architecture_cache",
+            "readme_cache",
+            "selected_model",
+        ]
+        if key in st.session_state
+    }
+    save_persisted_session_state(serializable_state, PROJECT_DIR)
 
 
 def validate_api_key(api_key: str) -> bool:
@@ -580,6 +619,7 @@ def render_sidebar():
     )
     if api_key and api_key != st.session_state.groq_api_key:
         st.session_state.groq_api_key = api_key
+        persist_session_state()
 
     if st.session_state.groq_api_key:
         if validate_api_key(st.session_state.groq_api_key):
@@ -713,6 +753,7 @@ def handle_clone(repo_url: str):
 
             stats = get_repository_stats(local_path)
             st.session_state.repo_stats = stats
+            persist_session_state()
 
             if vectorstore_exists(repo_name):
                 vs = load_vectorstore(repo_name)
@@ -761,6 +802,7 @@ def handle_build_knowledge_base():
 
             stats = get_repository_stats(st.session_state.repo_path)
             st.session_state.repo_stats = stats
+            persist_session_state()
 
             status.update(
                 label=f"✅ Knowledge base built! {len(chunks)} chunks indexed.",
@@ -793,6 +835,8 @@ def render_chat_tab():
     with col2:
         if st.button("🗑 Clear", key="clear_chat", use_container_width=True):
             st.session_state.chat_history = []
+            clear_chat_history(PROJECT_DIR)
+            persist_session_state()
             st.rerun()
 
     suggested_questions = [
@@ -812,6 +856,7 @@ def render_chat_tab():
                 if st.button(q, key=f"suggest_{i}", use_container_width=True):
                     st.session_state.chat_history.append(
                         {"role": "user", "content": q})
+                    persist_session_state()
                     with st.spinner("Thinking..."):
                         try:
                             answer, sources = ask_question(
@@ -856,6 +901,7 @@ def render_chat_tab():
     ):
         st.session_state.chat_history.append(
             {"role": "user", "content": user_input})
+        persist_session_state()
         with st.chat_message("user", avatar="👤"):
             st.write(user_input)
 
@@ -883,6 +929,7 @@ def render_chat_tab():
                         "content": answer,
                         "sources": sources,
                     })
+                    persist_session_state()
                 except Exception as e:
                     error_msg = f"⚠️ Error: {str(e)}"
                     st.error(error_msg)
@@ -891,6 +938,7 @@ def render_chat_tab():
                         "content": error_msg,
                         "sources": [],
                     })
+                    persist_session_state()
 
 
 def render_summary_tab():
@@ -930,6 +978,7 @@ def render_summary_tab():
                         "selected_model", "openai/gpt-oss-20b"),
                 )
                 st.session_state.summary_cache = summary
+                persist_session_state()
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate summary: {str(e)}")
@@ -1010,6 +1059,7 @@ def render_bugs_tab():
                         "selected_model", "openai/gpt-oss-20b"),
                 )
                 st.session_state.bug_cache = bug_report
+                persist_session_state()
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to analyze bugs: {str(e)}")
@@ -1070,6 +1120,7 @@ def render_architecture_tab():
                         "selected_model", "openai/gpt-oss-20b"),
                 )
                 st.session_state.architecture_cache = arch_text
+                persist_session_state()
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate architecture: {str(e)}")
@@ -1127,6 +1178,7 @@ def render_readme_tab():
                         "selected_model", "openai/gpt-oss-20b"),
                 )
                 st.session_state.readme_cache = readme
+                persist_session_state()
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate README: {str(e)}")
@@ -1196,6 +1248,7 @@ def render_file_explorer_tab():
                 help=file_info["path"],
             ):
                 st.session_state.selected_file = file_info["path"]
+                persist_session_state()
                 st.rerun()
 
     with col_viewer:
@@ -1244,6 +1297,7 @@ def render_file_explorer_tab():
                                             "selected_model", "openai/gpt-oss-20b"),
                                     )
                                     st.session_state[explain_key] = explanation
+                                    persist_session_state()
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"Error: {str(e)}")
