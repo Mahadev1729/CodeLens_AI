@@ -4,4 +4,10 @@ __pycache__/
 *.pyc
 vectorstore/
 .venv
+# chat_history.db
+# chat_history.db-shm
+# chat_history.db-wal
+# .codementorai_chat_history.db
+# .codementorai_chat_history.db-shm
+# .codementorai_chat_history.db-wal
 

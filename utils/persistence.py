@@ -29,6 +29,12 @@ def get_state_file_path(base_dir: Optional[Path | str] = None) -> Path:
 
 def get_chat_history_db_path(base_dir: Optional[Path | str] = None) -> Path:
     if base_dir is None:
+        return Path(__file__).resolve().parents[1] / "chat_history.db"
+    return Path(base_dir) / "chat_history.db"
+
+
+def get_legacy_chat_history_db_path(base_dir: Optional[Path | str] = None) -> Path:
+    if base_dir is None:
         return Path(__file__).resolve().parents[1] / ".codementorai_chat_history.db"
     return Path(base_dir) / ".codementorai_chat_history.db"
 
@@ -51,6 +57,10 @@ def _deserialize_sources(raw: Any) -> list[str]:
 
 def load_chat_history(base_dir: Optional[Path | str] = None) -> list[dict[str, Any]]:
     db_path = get_chat_history_db_path(base_dir)
+    if not db_path.exists():
+        legacy_path = get_legacy_chat_history_db_path(base_dir)
+        if legacy_path.exists():
+            db_path = legacy_path
     if not db_path.exists():
         return []
 
