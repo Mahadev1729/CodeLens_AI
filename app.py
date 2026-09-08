@@ -549,7 +549,7 @@ def init_session_state():
         "bug_cache": None,
         "architecture_cache": None,
         "readme_cache": None,
-        "selected_model": "llama-3.1-8b-instant",
+        "selected_model": "openai/gpt-oss-120b",
     }
     for key, val in defaults.items():
         if key not in st.session_state:
@@ -559,6 +559,11 @@ def init_session_state():
     for key, val in persisted_state.items():
         if key not in st.session_state or st.session_state[key] is None:
             st.session_state[key] = val
+
+    if st.session_state.get("selected_model") in {
+        "llama-3.1-8b-instant", "openai/gpt-oss-20b"
+    }:
+        st.session_state.selected_model = "openai/gpt-oss-120b"
 
     if st.session_state.get("repo_path") and st.session_state.get("knowledge_base_built"):
         repo_name = st.session_state.get("repo_name") or Path(
@@ -865,7 +870,7 @@ def render_chat_tab():
                                 st.session_state.groq_api_key,
                                 st.session_state.chat_history[:-1],
                                 st.session_state.get(
-                                    "selected_model", "llama-3.1-8b-instant"),
+                                    "selected_model", "openai/gpt-oss-120b"),
                             )
                             st.session_state.chat_history.append({
                                 "role": "assistant",
@@ -914,7 +919,7 @@ def render_chat_tab():
                         st.session_state.groq_api_key,
                         st.session_state.chat_history[:-1],
                         st.session_state.get(
-                            "selected_model", "llama-3.1-8b-instant"),
+                            "selected_model", "openai/gpt-oss-120b"),
                     )
                     st.markdown(answer)
                     if sources:
@@ -975,7 +980,7 @@ def render_summary_tab():
                     st.session_state.repo_path,
                     st.session_state.groq_api_key,
                     st.session_state.get(
-                        "selected_model", "openai/gpt-oss-20b"),
+                        "selected_model", "openai/gpt-oss-120b"),
                 )
                 st.session_state.summary_cache = summary
                 persist_session_state()
@@ -1056,7 +1061,7 @@ def render_bugs_tab():
                     st.session_state.repo_path,
                     st.session_state.groq_api_key,
                     st.session_state.get(
-                        "selected_model", "openai/gpt-oss-20b"),
+                        "selected_model", "openai/gpt-oss-120b"),
                 )
                 st.session_state.bug_cache = bug_report
                 persist_session_state()
@@ -1117,7 +1122,7 @@ def render_architecture_tab():
                     st.session_state.repo_path,
                     st.session_state.groq_api_key,
                     st.session_state.get(
-                        "selected_model", "openai/gpt-oss-20b"),
+                        "selected_model", "openai/gpt-oss-120b"),
                 )
                 st.session_state.architecture_cache = arch_text
                 persist_session_state()
@@ -1175,7 +1180,7 @@ def render_readme_tab():
                     st.session_state.repo_path,
                     st.session_state.groq_api_key,
                     st.session_state.get(
-                        "selected_model", "openai/gpt-oss-20b"),
+                        "selected_model", "openai/gpt-oss-120b"),
                 )
                 st.session_state.readme_cache = readme
                 persist_session_state()
@@ -1294,7 +1299,7 @@ def render_file_explorer_tab():
                                         content,
                                         st.session_state.groq_api_key,
                                         st.session_state.get(
-                                            "selected_model", "openai/gpt-oss-20b"),
+                                            "selected_model", "openai/gpt-oss-120b"),
                                     )
                                     st.session_state[explain_key] = explanation
                                     persist_session_state()

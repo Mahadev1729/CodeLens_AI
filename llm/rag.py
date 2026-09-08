@@ -35,12 +35,13 @@ Provide a comprehensive answer with the following structure:
 Answer:"""
 
 
-DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 
 
 def get_llm(api_key: str, model: str = DEFAULT_GROQ_MODEL) -> ChatGroq:
     safe_model = model if model in {
-        "llama-3.1-8b-instant", "gemma2-9b-it", "mixtral-8x7b-32768"} else DEFAULT_GROQ_MODEL
+        "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant",
+        "gemma2-9b-it", "mixtral-8x7b-32768"} else DEFAULT_GROQ_MODEL
     return ChatGroq(
         api_key=api_key,
         model=safe_model,
