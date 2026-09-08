@@ -32,6 +32,9 @@ Provide a comprehensive answer with the following structure:
 **Confidence Level:** [High / Medium / Low]
 [Brief justification for confidence level]
 
+Recent Chat History:
+{chat_history}
+
 Answer:"""
 
 
@@ -86,13 +89,16 @@ def ask_question(
             history_text = "\n\nChat History (recent):\n" + \
                 "\n".join(history_lines)
 
-    prompt_text = RAG_PROMPT_TEMPLATE + history_text
     prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template=prompt_text,
+        input_variables=["context", "question", "chat_history"],
+        template=RAG_PROMPT_TEMPLATE,
     )
     chain = prompt | llm | StrOutputParser()
-    response = chain.invoke({"context": context, "question": question})
+    response = chain.invoke({
+        "context": context,
+        "question": question,
+        "chat_history": history_text or "No previous chat history.",
+    })
     return response, source_files
 
 
