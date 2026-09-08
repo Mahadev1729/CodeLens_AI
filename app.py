@@ -526,6 +526,159 @@ div[data-testid="stExpander"] summary {
     background: var(--border-color);
     margin: 1.5rem 0;
 }
+
+/* Keep dense analysis views usable when Streamlit's content area narrows. */
+*, *::before, *::after { box-sizing: border-box; }
+
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMainBlockContainer"] {
+    min-width: 0;
+}
+
+.stMarkdown, .stAlert, .stExpander, [data-testid="stChatMessage"] {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.stMarkdown pre, .stMarkdown table, [data-testid="stCodeBlock"] {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    white-space: nowrap;
+}
+
+.stTabs [data-baseweb="tab"] {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 1024px) {
+    .hero-header {
+        padding: 2rem 1.25rem;
+    }
+
+    .hero-header h2 {
+        font-size: 1.9rem;
+    }
+
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        min-width: 0;
+    }
+
+    .bubble-user, .bubble-assistant {
+        max-width: 92%;
+    }
+}
+
+@media (max-width: 768px) {
+    section[data-testid="stSidebar"] > div {
+        padding: 1rem 0.75rem;
+    }
+
+    [data-testid="stMainBlockContainer"] {
+        padding: 1rem 0.75rem 2rem;
+    }
+
+    .hero-header {
+        border-radius: var(--radius-md);
+        padding: 1.5rem 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .hero-header h2 {
+        font-size: 1.55rem;
+        line-height: 1.2;
+    }
+
+    .hero-header p {
+        font-size: 0.85rem;
+        line-height: 1.45;
+    }
+
+    .section-header {
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    .section-header h3 {
+        font-size: 1rem;
+        line-height: 1.35;
+    }
+
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .stMetric {
+        padding: 0.5rem 0;
+    }
+
+    .chat-container {
+        padding: 0.75rem;
+        min-height: 280px;
+        max-height: none;
+    }
+
+    .bubble-user, .bubble-assistant {
+        max-width: 100%;
+        font-size: 0.88rem;
+        padding: 0.65rem 0.8rem;
+    }
+
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+
+    .empty-state .icon {
+        font-size: 2.5rem;
+    }
+
+    .bug-card {
+        padding: 0.85rem 0.9rem;
+    }
+
+    .bug-meta {
+        gap: 0.4rem 0.75rem;
+    }
+
+    .source-badge {
+        display: inline-block;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .mermaid-container {
+        padding: 0.75rem;
+        font-size: 0.72rem;
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        min-height: 2.6rem;
+        white-space: normal;
+    }
+
+    .stChatInput {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        flex: 1 1 calc(50% - 0.5rem) !important;
+        width: calc(50% - 0.5rem) !important;
+        max-width: calc(50% - 0.5rem) !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
