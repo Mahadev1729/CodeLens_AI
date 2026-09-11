@@ -12,6 +12,7 @@ from services.chunker import chunk_documents
 from services.loader import load_documents, get_repository_stats
 from services.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
 from utils.persistence import clear_chat_history, load_persisted_session_state, save_persisted_session_state
+from utils.auth import init_db, render_auth_page
 import os
 import queue
 import sys
@@ -764,6 +765,24 @@ def render_sidebar():
         <p>Powered by Groq + LangChain</p>
     </div>
     """, unsafe_allow_html=True)
+
+    if st.session_state.get("authenticated") and st.session_state.get("username"):
+        st.sidebar.markdown(
+            f"""
+            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-primary);">
+                <span>👤 <strong>{st.session_state.username}</strong></span>
+                <span style="color: var(--accent-green); font-size: 0.75rem;">● Active</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.sidebar.button("🚪 Log Out", key="sidebar_logout_btn", use_container_width=True):
+            for k in list(st.session_state.keys()):
+                del st.session_state[k]
+            st.session_state.authenticated = False
+            st.session_state.username = None
+            st.rerun()
+        st.sidebar.markdown('<div class="divider" style="margin: 0.8rem 0;"></div>', unsafe_allow_html=True)
 
     st.sidebar.markdown("### 🔑 API Configuration")
     st.sidebar.caption(
@@ -1533,6 +1552,11 @@ def inject_pwa_support():
 
 
 def main():
+    init_db()
+    if not st.session_state.get("authenticated", False):
+        render_auth_page()
+        return
+
     inject_pwa_support()
     init_session_state()
     render_sidebar()

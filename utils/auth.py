@@ -125,3 +125,58 @@ def authenticate_user(username: str, password: str, db_path: Optional[Path] = No
         return False, f"Authentication error: {str(e)}"
     finally:
         conn.close()
+
+
+def render_auth_page():
+    import streamlit as st
+
+    st.markdown("""
+        <div class="auth-header" style="text-align: center; padding: 2.5rem 1rem 1rem; margin-bottom: 1.5rem;">
+            <h1 style="background: linear-gradient(90deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem;">🧠 AI Codebase Mentor</h1>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">Sign in to your account or register to access the repository analysis workspace.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 1.8, 1])
+    with col2:
+        tab_login, tab_register = st.tabs(["🔑 Sign In", "📝 Create Account"])
+
+        # Tab: Sign In
+        with tab_login:
+            st.markdown("<br>", unsafe_allow_html=True)
+            with st.form("login_form", clear_on_submit=False):
+                login_user = st.text_input("Username", key="login_username", placeholder="Enter your username")
+                login_pass = st.text_input("Password", type="password", key="login_password", placeholder="••••••••")
+                submitted = st.form_submit_button("Sign In", use_container_width=True)
+
+                if submitted:
+                    success, message = authenticate_user(login_user, login_pass)
+                    if success:
+                        for k in list(st.session_state.keys()):
+                            if k not in ("authenticated", "username"):
+                                del st.session_state[k]
+                        st.session_state.authenticated = True
+                        st.session_state.username = message
+                        st.rerun()
+                    else:
+                        st.error(message)
+
+        # Tab: Register
+        with tab_register:
+            st.markdown("<br>", unsafe_allow_html=True)
+            with st.form("register_form", clear_on_submit=True):
+                reg_user = st.text_input("Choose Username", key="reg_username", placeholder="e.g. dev_johndoe")
+                reg_pass = st.text_input("Choose Password", type="password", key="reg_password", placeholder="Min 6 characters")
+                reg_pass_confirm = st.text_input("Confirm Password", type="password", key="reg_password_confirm", placeholder="••••••••")
+                reg_submit = st.form_submit_button("Create Account", use_container_width=True)
+
+                if reg_submit:
+                    if reg_pass != reg_pass_confirm:
+                        st.error("Passwords do not match.")
+                    else:
+                        ok, msg = register_user(reg_user, reg_pass)
+                        if ok:
+                            st.success(f"{msg} You can switch to the Sign In tab to log in.")
+                        else:
+                            st.error(msg)
+
