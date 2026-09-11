@@ -139,3 +139,15 @@ def safe_read_file(file_path: str, max_size_mb: float = 2.0) -> Optional[str]:
             return f.read()
     except Exception:
         return None
+
+
+def load_css(css_path: Optional[Path | str] = None) -> None:
+    """Loads and injects the global stylesheet from static/style.css."""
+    import streamlit as st
+    if css_path is None:
+        css_path = Path(__file__).resolve().parents[1] / "static" / "style.css"
+    path = Path(css_path)
+    if path.exists():
+        with path.open("r", encoding="utf-8") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+

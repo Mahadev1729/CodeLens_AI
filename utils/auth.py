@@ -129,6 +129,8 @@ def authenticate_user(username: str, password: str, db_path: Optional[Path] = No
 
 def render_auth_page():
     import streamlit as st
+    from utils.helper import load_css
+    load_css()
 
     st.markdown("""
         <div class="auth-header" style="text-align: center; padding: 2.5rem 1rem 1rem; margin-bottom: 1.5rem;">
