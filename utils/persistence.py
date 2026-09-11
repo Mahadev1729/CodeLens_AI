@@ -1,4 +1,5 @@
-﻿import json
+import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
@@ -21,19 +22,52 @@ DEFAULT_STATE_FILE = Path(__file__).resolve(
 ).parents[1] / ".codementorai_state.json"
 
 
+def _get_active_username() -> Optional[str]:
+    """Retrieves current logged-in username from Streamlit session state if available."""
+    try:
+        import streamlit as st
+        user = st.session_state.get("username")
+        if user:
+            safe_user = re.sub(r"[^a-zA-Z0-9_.-]", "_", str(user).strip())
+            return safe_user if safe_user else None
+    except Exception:
+        pass
+    return None
+
+
+def get_user_storage_dir(base_dir: Optional[Path | str] = None) -> Optional[Path]:
+    """Returns dedicated user storage directory if a user is logged in, else None."""
+    username = _get_active_username()
+    if not username:
+        return None
+    root = Path(base_dir) if base_dir else Path(__file__).resolve().parents[1]
+    user_dir = root / "user_data" / username
+    user_dir.mkdir(parents=True, exist_ok=True)
+    return user_dir
+
+
 def get_state_file_path(base_dir: Optional[Path | str] = None) -> Path:
+    user_dir = get_user_storage_dir(base_dir)
+    if user_dir:
+        return user_dir / ".codementorai_state.json"
     if base_dir is None:
         return DEFAULT_STATE_FILE
     return Path(base_dir) / ".codementorai_state.json"
 
 
 def get_chat_history_db_path(base_dir: Optional[Path | str] = None) -> Path:
+    user_dir = get_user_storage_dir(base_dir)
+    if user_dir:
+        return user_dir / "chat_history.db"
     if base_dir is None:
         return Path(__file__).resolve().parents[1] / "chat_history.db"
     return Path(base_dir) / "chat_history.db"
 
 
 def get_legacy_chat_history_db_path(base_dir: Optional[Path | str] = None) -> Path:
+    user_dir = get_user_storage_dir(base_dir)
+    if user_dir:
+        return user_dir / ".codementorai_chat_history.db"
     if base_dir is None:
         return Path(__file__).resolve().parents[1] / ".codementorai_chat_history.db"
     return Path(base_dir) / ".codementorai_chat_history.db"

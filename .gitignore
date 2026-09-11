@@ -1,4 +1,4 @@
-﻿.env
+.env
 .env.*
 __pycache__/
 *.pyc
@@ -10,4 +10,7 @@ vectorstore/
 # .codementorai_chat_history.db
 # .codementorai_chat_history.db-shm
 # .codementorai_chat_history.db-wal
+users.db*
+user_data/
+
 
