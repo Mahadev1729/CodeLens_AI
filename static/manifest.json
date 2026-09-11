@@ -1,0 +1,37 @@
+{
+  "name": "AI Codebase Mentor",
+  "short_name": "CodeMentor",
+  "description": "Understand any GitHub repository instantly. Powered by Groq LLM + FAISS Vector Search.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#58a6ff",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/app/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Chat with Codebase",
+      "short_name": "Chat",
+      "description": "Ask questions about your repository",
+      "url": "/#chat",
+      "icons": [{ "src": "/app/static/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

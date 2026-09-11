@@ -17,6 +17,7 @@ import queue
 import sys
 from pathlib import Path
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -1475,7 +1476,64 @@ def render_file_explorer_tab():
             """, unsafe_allow_html=True)
 
 
+def inject_pwa_support():
+    pwa_html = """
+    <link rel="manifest" href="/app/static/manifest.json">
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/app/static/sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+
+      // Handle install prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI to notify the user they can add to home screen
+        const btn = document.getElementById('install-pwa-btn');
+        if (btn) btn.style.display = 'block';
+      });
+
+      function installApp() {
+        if (!deferredPrompt) return;
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          deferredPrompt = null;
+          const btn = document.getElementById('install-pwa-btn');
+          if (btn) btn.style.display = 'none';
+        });
+      }
+
+      window.addEventListener('appinstalled', (evt) => {
+        const btn = document.getElementById('install-pwa-btn');
+        if (btn) btn.style.display = 'none';
+      });
+    </script>
+    <button id="install-pwa-btn" onclick="installApp()" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: linear-gradient(135deg, #58a6ff, #bc8cff); color: #fff; border: none; border-radius: 20px; padding: 10px 20px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: 'Inter', sans-serif;">
+      ⬇ Install App
+    </button>
+    """
+    components.html(pwa_html, height=0, width=0)
+
+
 def main():
+    inject_pwa_support()
     init_session_state()
     render_sidebar()
 
