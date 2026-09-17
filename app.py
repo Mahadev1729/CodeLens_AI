@@ -11,7 +11,16 @@ from services.vectorstore import build_vectorstore, load_vectorstore, vectorstor
 from services.chunker import chunk_documents
 from services.loader import load_documents, get_repository_stats
 from services.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
-from utils.persistence import clear_chat_history, load_persisted_session_state, save_persisted_session_state
+from utils.persistence import (
+    clear_chat_history,
+    load_persisted_session_state,
+    save_persisted_session_state,
+    log_user_activity,
+    load_user_activities,
+    clear_user_activities,
+    get_user_stats_summary,
+    load_chat_history,
+)
 from utils.auth import init_db, render_auth_page
 import os
 import queue
@@ -44,30 +53,31 @@ def init_session_state():
     if not default_api_key:
         default_api_key = os.getenv("\ufeffGROQ_API_KEY", "").strip()
 
+    persisted_state = load_persisted_session_state(PROJECT_DIR)
+
     defaults = {
-        "chat_history": [],
-        "repo_path": None,
-        "repo_name": None,
+        "chat_history": persisted_state.get("chat_history") or [],
+        "repo_path": persisted_state.get("repo_path"),
+        "repo_name": persisted_state.get("repo_name"),
         "vectorstore": None,
-        "repo_stats": None,
-        "selected_file": None,
-        "groq_api_key": default_api_key,
-        "knowledge_base_built": False,
+        "repo_stats": persisted_state.get("repo_stats"),
+        "selected_file": persisted_state.get("selected_file"),
+        "groq_api_key": persisted_state.get("groq_api_key") or default_api_key,
+        "knowledge_base_built": persisted_state.get("knowledge_base_built", False),
         "clone_in_progress": False,
-        "summary_cache": None,
-        "bug_cache": None,
-        "architecture_cache": None,
-        "readme_cache": None,
-        "selected_model": "openai/gpt-oss-120b",
+        "summary_cache": persisted_state.get("summary_cache"),
+        "bug_cache": persisted_state.get("bug_cache"),
+        "architecture_cache": persisted_state.get("architecture_cache"),
+        "readme_cache": persisted_state.get("readme_cache"),
+        "selected_model": persisted_state.get("selected_model", "openai/gpt-oss-120b"),
     }
     for key, val in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = val
-
-    persisted_state = load_persisted_session_state(PROJECT_DIR)
-    for key, val in persisted_state.items():
         if key not in st.session_state or st.session_state[key] is None:
             st.session_state[key] = val
+
+    # Sync chat_history from user persistence if session state is empty
+    if not st.session_state.chat_history and persisted_state.get("chat_history"):
+        st.session_state.chat_history = persisted_state["chat_history"]
 
     if st.session_state.get("selected_model") in {
         "llama-3.1-8b-instant", "openai/gpt-oss-20b"
@@ -77,7 +87,7 @@ def init_session_state():
     if st.session_state.get("repo_path") and st.session_state.get("knowledge_base_built"):
         repo_name = st.session_state.get("repo_name") or Path(
             st.session_state["repo_path"]).name
-        if repo_name:
+        if repo_name and st.session_state.get("vectorstore") is None:
             from services.vectorstore import load_vectorstore, vectorstore_exists
             if vectorstore_exists(repo_name):
                 stored_vector = load_vectorstore(repo_name)
@@ -121,16 +131,23 @@ def render_sidebar():
     """, unsafe_allow_html=True)
 
     if st.session_state.get("authenticated") and st.session_state.get("username"):
+        user_stats = get_user_stats_summary(base_dir=PROJECT_DIR)
         st.sidebar.markdown(
             f"""
-            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-primary);">
-                <span>👤 <strong>{st.session_state.username}</strong></span>
-                <span style="color: var(--accent-green); font-size: 0.75rem;">● Active</span>
+            <div class="user-badge">
+                <div>
+                    <div>👤 <strong>{st.session_state.username}</strong></div>
+                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                        💬 {user_stats.get('total_questions', 0)} questions · 📦 {user_stats.get('distinct_repos_count', 0)} repos
+                    </div>
+                </div>
+                <span style="color: var(--accent-green); font-size: 0.75rem;">● Online</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
         if st.sidebar.button("🚪 Log Out", key="sidebar_logout_btn", use_container_width=True):
+            persist_session_state()
             for k in list(st.session_state.keys()):
                 del st.session_state[k]
             st.session_state.authenticated = False
@@ -287,6 +304,15 @@ def handle_clone(repo_url: str):
             st.session_state.repo_stats = stats
             persist_session_state()
 
+            log_user_activity(
+                "clone",
+                f"Cloned repository '{repo_name}'",
+                details=f"Source: {repo_url.strip()}",
+                repo_name=repo_name,
+                metadata={"url": repo_url.strip(), "files": stats.get("total_files", 0), "lines": stats.get("total_lines", 0)},
+                base_dir=PROJECT_DIR,
+            )
+
             if vectorstore_exists(repo_name):
                 vs = load_vectorstore(repo_name)
                 if vs:
@@ -335,6 +361,15 @@ def handle_build_knowledge_base():
             stats = get_repository_stats(st.session_state.repo_path)
             st.session_state.repo_stats = stats
             persist_session_state()
+
+            log_user_activity(
+                "build_kb",
+                f"Built Knowledge Base for '{st.session_state.repo_name}'",
+                details=f"Indexed {len(chunks)} chunks from {len(documents)} files",
+                repo_name=st.session_state.repo_name,
+                metadata={"chunks": len(chunks), "files": len(documents)},
+                base_dir=PROJECT_DIR,
+            )
 
             status.update(
                 label=f"✅ Knowledge base built! {len(chunks)} chunks indexed.",
@@ -404,12 +439,22 @@ def render_chat_tab():
                                 "content": answer,
                                 "sources": sources,
                             })
+                            persist_session_state()
+                            log_user_activity(
+                                "chat",
+                                f"Asked: \"{truncate_text(q, 60)}\"",
+                                details=q,
+                                repo_name=st.session_state.repo_name,
+                                metadata={"question": q, "sources_count": len(sources) if sources else 0},
+                                base_dir=PROJECT_DIR,
+                            )
                         except Exception as e:
                             st.session_state.chat_history.append({
                                 "role": "assistant",
                                 "content": f"Error: {str(e)}",
                                 "sources": [],
                             })
+                            persist_session_state()
                     st.rerun()
 
     for msg in st.session_state.chat_history:
@@ -462,6 +507,14 @@ def render_chat_tab():
                         "sources": sources,
                     })
                     persist_session_state()
+                    log_user_activity(
+                        "chat",
+                        f"Asked: \"{truncate_text(user_input, 60)}\"",
+                        details=user_input,
+                        repo_name=st.session_state.repo_name,
+                        metadata={"question": user_input, "sources_count": len(sources) if sources else 0},
+                        base_dir=PROJECT_DIR,
+                    )
                 except Exception as e:
                     error_msg = f"⚠️ Error: {str(e)}"
                     st.error(error_msg)
@@ -511,6 +564,13 @@ def render_summary_tab():
                 )
                 st.session_state.summary_cache = summary
                 persist_session_state()
+                log_user_activity(
+                    "summary",
+                    f"Generated Repository Summary for '{st.session_state.repo_name}'",
+                    details=f"Model: {st.session_state.get('selected_model')}",
+                    repo_name=st.session_state.repo_name,
+                    base_dir=PROJECT_DIR,
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate summary: {str(e)}")
@@ -592,6 +652,15 @@ def render_bugs_tab():
                 )
                 st.session_state.bug_cache = bug_report
                 persist_session_state()
+                issues = parse_bugs(bug_report)
+                log_user_activity(
+                    "bugs",
+                    f"Ran Bug & Quality Analysis on '{st.session_state.repo_name}'",
+                    details=f"Detected {len(issues)} potential issue(s)",
+                    repo_name=st.session_state.repo_name,
+                    metadata={"total_issues": len(issues)},
+                    base_dir=PROJECT_DIR,
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to analyze bugs: {str(e)}")
@@ -653,6 +722,12 @@ def render_architecture_tab():
                 )
                 st.session_state.architecture_cache = arch_text
                 persist_session_state()
+                log_user_activity(
+                    "architecture",
+                    f"Generated Architecture Diagram for '{st.session_state.repo_name}'",
+                    repo_name=st.session_state.repo_name,
+                    base_dir=PROJECT_DIR,
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate architecture: {str(e)}")
@@ -711,6 +786,12 @@ def render_readme_tab():
                 )
                 st.session_state.readme_cache = readme
                 persist_session_state()
+                log_user_activity(
+                    "readme",
+                    f"Generated README.md for '{st.session_state.repo_name}'",
+                    repo_name=st.session_state.repo_name,
+                    base_dir=PROJECT_DIR,
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate README: {str(e)}")
@@ -830,6 +911,14 @@ def render_file_explorer_tab():
                                     )
                                     st.session_state[explain_key] = explanation
                                     persist_session_state()
+                                    log_user_activity(
+                                        "file_explain",
+                                        f"Explained file '{st.session_state.selected_file}'",
+                                        details=f"Repository: {st.session_state.repo_name}",
+                                        repo_name=st.session_state.repo_name,
+                                        metadata={"file": st.session_state.selected_file},
+                                        base_dir=PROJECT_DIR,
+                                    )
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"Error: {str(e)}")
@@ -847,6 +936,166 @@ def render_file_explorer_tab():
                 <p>Click a file from the explorer to view its content.</p>
             </div>
             """, unsafe_allow_html=True)
+
+
+def render_activity_tab():
+    st.markdown('<div class="section-header"><h3>📜 Past Activity & History</h3></div>', unsafe_allow_html=True)
+
+    username = st.session_state.get("username", "User")
+    stats = get_user_stats_summary(username=username, base_dir=PROJECT_DIR)
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("👤 Active User", username)
+    with col2:
+        st.metric("💬 Chat Questions", stats.get("total_questions", 0))
+    with col3:
+        st.metric("📦 Repositories Explored", stats.get("distinct_repos_count", 0))
+    with col4:
+        st.metric("⚡ Total Activity Events", stats.get("total_activities", 0))
+
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+    tab_timeline, tab_past_chats = st.tabs(["🕒 Activity Timeline", "💬 Past Chat Conversations"])
+
+    with tab_timeline:
+        col_f1, col_f2, col_f3 = st.columns([1.5, 2, 1])
+        with col_f1:
+            filter_opts = [
+                ("all", "All Activities"),
+                ("clone", "📦 Repository Clones"),
+                ("build_kb", "⚡ Knowledge Base Builds"),
+                ("chat", "💬 Chat Questions"),
+                ("summary", "📋 Summaries"),
+                ("bugs", "🐛 Bug Reports"),
+                ("architecture", "🏗️ Architecture"),
+                ("readme", "📝 READMEs"),
+                ("file_explain", "🤖 File Explanations"),
+            ]
+            activity_filter = st.selectbox(
+                "Filter Activity Type",
+                options=filter_opts,
+                format_func=lambda x: x[1],
+                key="activity_type_filter",
+            )[0]
+        with col_f2:
+            search_query = st.text_input("Search activities", placeholder="Search by title, repo, or details...", key="activity_search")
+        with col_f3:
+            st.write("")
+            st.write("")
+            if st.button("🗑️ Clear Activity Log", key="btn_clear_activities", use_container_width=True):
+                clear_user_activities(username=username, base_dir=PROJECT_DIR)
+                st.success("Activity log cleared.")
+                st.rerun()
+
+        activities = load_user_activities(
+            username=username,
+            limit=150,
+            activity_type=activity_filter if activity_filter != "all" else None,
+            search_query=search_query,
+            base_dir=PROJECT_DIR,
+        )
+
+        if not activities:
+            st.markdown("""
+            <div class="empty-state">
+                <div class="icon">📜</div>
+                <h3>No Activities Recorded Yet</h3>
+                <p>Perform tasks like cloning repositories, asking chat questions, generating summaries, or finding bugs to see your activity timeline here.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            badge_icon_map = {
+                "clone": ("📦 Clone", "activity-badge-clone"),
+                "build_kb": ("⚡ Knowledge Base", "activity-badge-build_kb"),
+                "chat": ("💬 Chat", "activity-badge-chat"),
+                "summary": ("📋 Summary", "activity-badge-summary"),
+                "bugs": ("🐛 Bug Finder", "activity-badge-bugs"),
+                "architecture": ("🏗️ Architecture", "activity-badge-architecture"),
+                "readme": ("📝 README", "activity-badge-readme"),
+                "file_explain": ("🤖 File Explain", "activity-badge-file_explain"),
+            }
+
+            for act in activities:
+                atype = act.get("activity_type", "other")
+                badge_text, badge_cls = badge_icon_map.get(atype, ("⚡ Action", "activity-badge-chat"))
+                repo_tag_html = f'<span class="repo-tag">📦 {act["repo_name"]}</span>' if act.get("repo_name") else ""
+                details_html = f'<div class="activity-details">{act["details"]}</div>' if act.get("details") else ""
+                
+                st.markdown(f"""
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <div class="activity-title">
+                            <span class="activity-badge {badge_cls}">{badge_text}</span>
+                            <span>{act['title']}</span>
+                            {repo_tag_html}
+                        </div>
+                        <div class="activity-time">🕒 {act.get('timestamp', '')}</div>
+                    </div>
+                    {details_html}
+                </div>
+                """, unsafe_allow_html=True)
+
+    with tab_past_chats:
+        chat_col1, chat_col2 = st.columns([3, 1])
+        with chat_col2:
+            if st.button("🗑️ Clear Chat History", key="btn_clear_chat_history_tab", use_container_width=True):
+                st.session_state.chat_history = []
+                clear_chat_history(PROJECT_DIR, username=username)
+                persist_session_state()
+                st.success("Chat history cleared.")
+                st.rerun()
+
+        chat_history = load_chat_history(PROJECT_DIR, username=username)
+        if not chat_history:
+            st.markdown("""
+            <div class="empty-state">
+                <div class="icon">💬</div>
+                <h3>No Chat History Found</h3>
+                <p>Start a conversation in the Chat tab to view past conversations and queries here.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            pairs = []
+            i = 0
+            while i < len(chat_history):
+                msg = chat_history[i]
+                if msg.get("role") == "user":
+                    question = msg.get("content", "")
+                    timestamp = msg.get("timestamp", "")
+                    answer = ""
+                    sources = []
+                    if i + 1 < len(chat_history) and chat_history[i + 1].get("role") == "assistant":
+                        answer = chat_history[i + 1].get("content", "")
+                        sources = chat_history[i + 1].get("sources", [])
+                        i += 2
+                    else:
+                        i += 1
+                    pairs.append({
+                        "question": question,
+                        "answer": answer,
+                        "sources": sources,
+                        "timestamp": timestamp,
+                    })
+                else:
+                    i += 1
+
+            st.markdown(f"**Total Conversations:** {len(pairs)}")
+            for idx, p in enumerate(reversed(pairs)):
+                time_str = f" · 🕒 {p['timestamp']}" if p.get('timestamp') else ""
+                with st.expander(f"💬 Q: {p['question'][:80]}... {time_str}", expanded=(idx == 0)):
+                    st.markdown("**User Question:**")
+                    st.write(p["question"])
+                    if p.get("answer"):
+                        st.markdown("**AI Response:**")
+                        st.markdown(p["answer"])
+                    if p.get("sources"):
+                        st.markdown("**Referenced Files:**")
+                        source_html = " ".join([
+                            f'<span class="source-badge">📄 {src}</span>'
+                            for src in p["sources"]
+                        ])
+                        st.markdown(source_html, unsafe_allow_html=True)
 
 
 def inject_pwa_support():
@@ -938,13 +1187,14 @@ def main():
 
         st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-    tab_chat, tab_summary, tab_bugs, tab_arch, tab_readme, tab_files = st.tabs([
+    tab_chat, tab_summary, tab_bugs, tab_arch, tab_readme, tab_files, tab_activity = st.tabs([
         "💬 Chat",
         "📋 Summary",
         "🐛 Bug Finder",
         "🏗️ Architecture",
         "📝 README",
         "📁 File Explorer",
+        "📜 Activity & History",
     ])
 
     with tab_chat:
@@ -964,6 +1214,9 @@ def main():
 
     with tab_files:
         render_file_explorer_tab()
+
+    with tab_activity:
+        render_activity_tab()
 
     if not st.session_state.repo_path and not any([
         st.session_state.repo_path,
