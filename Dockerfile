@@ -17,8 +17,7 @@ RUN npm run build
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8000
+    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
@@ -43,8 +42,8 @@ COPY utils/ ./utils/
 # Copy built React frontend assets from Stage 1
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Expose port (Render automatically maps $PORT)
-EXPOSE 8000
+# Expose port (Render sets $PORT dynamically, defaulting to 10000)
+EXPOSE 10000 8000
 
-# Start FastAPI application
-CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Start FastAPI application binding dynamically to Render's $PORT
+CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
