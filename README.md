@@ -1,124 +1,66 @@
-# 🧠 AI Codebase Mentor
+# 🧠 CodeMentorAI
 
-> Understand any GitHub repository instantly with AI-powered analysis, chat, and documentation generation.
+> **Full-Stack AI Codebase Mentor** powered by **React.js**, **FastAPI**, **MySQL**, **LangChain**, and **Groq LLMs**.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-red)](https://streamlit.io)
-[![LangChain](https://img.shields.io/badge/LangChain-0.2+-green)](https://langchain.com)
-[![Groq](https://img.shields.io/badge/Groq-LLaMA3-orange)](https://groq.com)
+---
 
-## Features
+## 🌟 Architecture Overview
 
-- **💬 Chat with Code** — Ask any question about a repository in plain English
-- **📋 Repository Summary** — Instant overview of architecture, tech stack, and entry points
-- **🐛 Bug Finder** — Detect security vulnerabilities, code smells, and quality issues
-- **🏗️ Architecture Diagram** — Generate Mermaid diagrams of system architecture
-- **📝 README Generator** — Auto-generate professional README documentation (with download)
-- **📁 File Explorer** — Browse files with syntax highlighting and per-file AI explanations
-- **⚡ FAISS Vector Search** — Semantic code search with persisted index
-- **🔄 Session State** — Cached results, chat history, and selected files across interactions
+- **Frontend**: Modern **React.js 18 + Vite** with a sleek dark-mode design system, live Mermaid diagram renderer, syntax-highlighted code explorer, and interactive Q&A chat.
+- **Backend**: High-performance **FastAPI** REST API with JWT authentication, modular route controllers, and asynchronous task execution.
+- **Database**: **MySQL** database support (with automated schema creation for `users`, `chat_history`, `activities`, and `user_sessions`), and seamless SQLite fallback if MySQL is not running.
+- **AI Engine**: **Groq LLMs** (GPT-OSS 120B / Llama 3.1 8B / Gemma 2 9B / Mixtral 8x7B) + **LangChain** + **FAISS Vector Store** indexing.
 
+---
 
+## 🚀 Quick Start
 
+### 1. Environment Configuration
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| UI | Streamlit |
-| LLM | Groq (LLaMA-3.3-70B) |
-| Orchestration | LangChain |
-| Embeddings | HuggingFace sentence-transformers/all-MiniLM-L6-v2 |
-| Vector DB | FAISS |
-| Git | GitPython |
-| Config | python-dotenv |
-
-## Project Structure
-
-```
-AI_Codebase_Mentor/
-├── app.py                  # Main Streamlit application
-├── requirements.txt
-├── .env.example
-├── repos/                  # Cloned repositories
-├── vectorstore/            # Persisted FAISS indices
-├── services/
-│   ├── clone_repo.py       # GitHub cloning via GitPython
-│   ├── loader.py           # Source file loading & stats
-│   ├── chunker.py          # RecursiveCharacterTextSplitter
-│   ├── embeddings.py       # HuggingFace embeddings (cached)
-│   ├── vectorstore.py      # FAISS build/load/persist
-│   ├── rag.py              # RAG pipeline & QA chain
-│   ├── summary.py          # Repository summary generator
-│   ├── bugfinder.py        # Bug & security analysis
-│   ├── architecture.py     # Mermaid diagram generator
-│   └── readme_generator.py # README.md generator
-└── utils/
-    └── helper.py           # Shared utilities & constants
-```
-
-## Installation
-
-```bash
-# 1. Clone this repository
-git clone https://github.com/your-username/ai-codebase-mentor
-cd ai-codebase-mentor
-
-# 2. Create virtual environment
-python -m venv venv
-venv\Scripts\activate       # Windows
-source venv/bin/activate    # macOS/Linux
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment
-cp .env.example .env
-# Edit .env and set your GROQ_API_KEY
-```
-
-## Configuration
-
-Create a `.env` file in the project root:
+Create or update `.env` in the project root:
 
 ```env
 GROQ_API_KEY=gsk_your_groq_api_key_here
+
+# Optional: MySQL Database Configuration (Defaults to SQLite if omitted)
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DATABASE=codementorai
 ```
 
-Get a free Groq API key at [console.groq.com](https://console.groq.com).
+### 2. Start Both Backend & Frontend
 
-## Usage
-
+#### On Windows:
+Double-click `run_app.bat` or run:
 ```bash
-streamlit run app.py
+.\run_app.bat
 ```
 
-Then open [http://localhost:8501](http://localhost:8501) in your browser.
+#### Or Run Manually in Two Terminals:
 
-### Workflow
-
-1. Enter your Groq API key in the sidebar
-2. Paste a public GitHub repository URL
-3. Click **Clone** to download the repository
-4. Click **Build KB** to create the FAISS knowledge base
-5. Use any of the six analysis tabs
-
-### Example Questions
-
+**Terminal 1 (FastAPI Backend):**
+```bash
+python run_backend.py
 ```
-"Explain the project architecture"
-"How does authentication work?"
-"What are the main API endpoints?"
-"Find potential SQL injection vulnerabilities"
-"Explain the login flow"
-"What database is used and what's the schema?"
+> Server runs on `http://127.0.0.1:8000` (Interactive API Docs: `http://127.0.0.1:8000/docs`)
+
+**Terminal 2 (React Frontend):**
+```bash
+cd frontend
+npm run dev
 ```
+> Web UI runs on `http://localhost:5173`
 
-## Supported File Types
+---
 
-`.py` `.js` `.ts` `.tsx` `.jsx` `.java` `.cpp` `.c` `.cs` `.go` `.php` `.rb` `.swift` `.kt` `.rs` `.html` `.css` `.sql` `.json` `.yaml` `.yml` `.md` `.sh` `.toml` `.xml` `.vue` `.scss`
+## 📁 Key Features
 
-## License
-
-MIT License — feel free to use, modify, and distribute.
-"# CodeMentorAI" 
+1. 💬 **Chat with Codebase**: Ask natural-language questions about any repository. Responses cite exact source files with clickable pills.
+2. 📋 **Repository Summary**: Executive architectural overview, folder layout, tech stack detection, and improvement recommendations.
+3. 🐛 **Bug Finder & Quality Scanner**: Detects logic bugs, security vulnerabilities, dead code, and code smells categorized by severity (High, Medium, Low) with actionable fixes.
+4. 🏗️ **Architecture Diagram**: Live-rendered Mermaid flowchart showing system architecture and component data flows with copy and Mermaid Live Editor support.
+5. 📝 **README Generator**: Automatically generates comprehensive, markdown documentation ready for GitHub.
+6. 📁 **File Explorer & Explainer**: Searchable file tree, code viewer, and AI breakdown for any source file.
+7. 📜 **Activity Timeline & History**: Dashboard metrics, filterable event timeline, and past conversation search.

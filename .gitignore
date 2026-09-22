@@ -1,16 +1,50 @@
-﻿.env
-.env.*
+# Python
 __pycache__/
-*.pyc
-vectorstore/
-.venv
-chat_history.db
-# chat_history.db-shm
-# chat_history.db-wal
-# .codementorai_chat_history.db
-# .codementorai_chat_history.db-shm
-# .codementorai_chat_history.db-wal
-users.db*
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Node.js & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+.npm/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Cloned Repositories & User Data
+repos/*
+!repos/.gitkeep
 user_data/
+vectorstore/*
+!vectorstore/.gitkeep
 
+# Databases & State
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+app_database.db
+chat_history.db
+users.db
+activities.db
+.codementorai_state.json
 
+# IDE & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.log
