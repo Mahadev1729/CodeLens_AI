@@ -39,6 +39,14 @@ export const api = {
   checkHealth: () => request('/health'),
 
   // Auth
+  getAuthConfig: () => request('/auth/config'),
+
+  googleLogin: (credential) =>
+    request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    }),
+
   register: (username, password) =>
     request('/auth/register', {
       method: 'POST',

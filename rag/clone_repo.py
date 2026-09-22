@@ -8,7 +8,9 @@ from git import Repo, GitCommandError, InvalidGitRepositoryError
 from utils.helper import extract_repo_name
 
 
-REPOS_DIR = Path("repos")
+from backend.config import PROJECT_DIR
+
+REPOS_DIR = PROJECT_DIR / "repos"
 
 
 def _remove_existing_repo(path: Path) -> None:

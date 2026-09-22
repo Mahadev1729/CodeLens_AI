@@ -15,6 +15,7 @@ import {
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
+import AuthScreen from './components/AuthScreen';
 import ChatTab from './components/tabs/ChatTab';
 import SummaryTab from './components/tabs/SummaryTab';
 import BugFinderTab from './components/tabs/BugFinderTab';
@@ -36,6 +37,7 @@ const TABS = [
 
 export default function App() {
   const [user, setUser] = useState(localStorage.getItem('codementor_user') || null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(!!localStorage.getItem('codementor_token'));
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   
@@ -69,7 +71,6 @@ export default function App() {
   }, []);
 
   const initApp = async () => {
-    // 1. Check current logged-in user profile
     const token = localStorage.getItem('codementor_token');
     if (token) {
       try {
@@ -83,16 +84,18 @@ export default function App() {
           if (s.architecture_cache) setArchCache({ diagram_code: '', raw: s.architecture_cache });
           if (s.readme_cache) setReadmeCache(s.readme_cache);
         }
+        await refreshLocalRepos();
       } catch (err) {
         console.warn('Session expired or invalid token:', err);
         localStorage.removeItem('codementor_token');
         localStorage.removeItem('codementor_user');
         setUser(null);
+      } finally {
+        setIsCheckingAuth(false);
       }
+    } else {
+      setIsCheckingAuth(false);
     }
-
-    // 2. Fetch local repositories list
-    await refreshLocalRepos();
   };
 
   const refreshLocalRepos = async () => {
@@ -168,9 +171,17 @@ export default function App() {
     showNotification('success', 'Groq API Key saved successfully.');
   };
 
-  const handleAuthSuccess = (username, sessionState) => {
+  const handleAuthSuccess = async (username, sessionState) => {
     setUser(username);
-    showNotification('success', `Welcome back, ${username}!`);
+    if (sessionState) {
+      if (sessionState.groq_api_key) setGroqApiKey(sessionState.groq_api_key);
+      if (sessionState.selected_model) setSelectedModel(sessionState.selected_model);
+      if (sessionState.summary_cache) setSummaryCache(sessionState.summary_cache);
+      if (sessionState.architecture_cache) setArchCache({ diagram_code: '', raw: sessionState.architecture_cache });
+      if (sessionState.readme_cache) setReadmeCache(sessionState.readme_cache);
+    }
+    await refreshLocalRepos();
+    showNotification('success', `Welcome to CodeMentorAI, ${username}!`);
   };
 
   const handleLogout = () => {
@@ -185,6 +196,24 @@ export default function App() {
     setActiveTab('files');
   };
 
+  // 1. Initial Auth Check loading screen
+  if (isCheckingAuth) {
+    return (
+      <div className="auth-fullscreen-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="auth-logo-icon">
+          <Brain size={30} style={{ color: 'var(--accent-blue)' }} />
+        </div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Restoring workspace session...</p>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated: Show full-screen Auth Login/Registration portal first
+  if (!user) {
+    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  // 3. Authenticated: Render workspace
   return (
     <div className="app-container">
       {/* 1. Top Navigation Bar */}

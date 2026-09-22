@@ -6,7 +6,9 @@ from langchain_community.vectorstores import FAISS
 from rag.embeddings import get_embeddings
 
 
-VECTORSTORE_DIR = Path("vectorstore")
+from backend.config import PROJECT_DIR
+
+VECTORSTORE_DIR = PROJECT_DIR / "vectorstore"
 
 
 def get_vectorstore_path(repo_name: str) -> str:

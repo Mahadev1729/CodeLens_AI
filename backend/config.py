@@ -54,10 +54,11 @@ if DATABASE_URL:
 DEFAULT_GROQ_API_KEY = _get_env("GROQ_API_KEY", "")
 DEFAULT_MODEL = _get_env("DEFAULT_MODEL", "openai/gpt-oss-120b")
 
-# Security Settings
+# Security & Auth Settings
 JWT_SECRET_KEY = _get_env("JWT_SECRET_KEY", "codementorai_super_secure_jwt_secret_key_2026_!@#$%")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+GOOGLE_CLIENT_ID = _get_env("GOOGLE_CLIENT_ID", "")
 
 # CORS Allowed Origins
 CORS_ORIGINS = [
