@@ -86,11 +86,49 @@ def truncate_text(text: str, max_chars: int = 3000) -> str:
     return text[:max_chars] + f"\n\n... [Truncated. Total length: {len(text)} characters]"
 
 
-def extract_repo_name(url: str) -> str:
-    url = url.rstrip("/")
+def normalize_github_url(url: str) -> Optional[str]:
+    if not url:
+        return None
+    url = url.strip()
+
+    # Support shorthand owner/repo (e.g., 'fastapi/fastapi' or 'octocat/Hello-World')
+    if re.match(r'^[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+$', url):
+        return f"https://github.com/{url}"
+
+    if url.startswith("git@github.com:"):
+        url = "https://github.com/" + url[len("git@github.com:"):]
+    elif url.startswith("github.com/"):
+        url = "https://" + url
+    elif url.startswith("www.github.com/"):
+        url = "https://" + url
+    elif url.startswith("http://"):
+        url = "https://" + url[len("http://"):]
+
+    if not (url.startswith("https://github.com/") or url.startswith("https://www.github.com/")):
+        return None
+
+    if url.startswith("https://www.github.com/"):
+        url = "https://github.com/" + url[len("https://www.github.com/"):]
+
+    # Remove queries, fragments, trailing slashes and .git
+    url = url.split("?")[0].split("#")[0].rstrip("/")
     if url.endswith(".git"):
         url = url[:-4]
-    parts = url.split("/")
+
+    parts = [p for p in url.replace("https://github.com/", "").split("/") if p]
+    if len(parts) < 2:
+        return None
+
+    owner, repo = parts[0], parts[1]
+    return f"https://github.com/{owner}/{repo}"
+
+
+def extract_repo_name(url: str) -> str:
+    normalized = normalize_github_url(url) or url
+    normalized = normalized.rstrip("/")
+    if normalized.endswith(".git"):
+        normalized = normalized[:-4]
+    parts = normalized.split("/")
     return parts[-1] if parts else "unknown_repo"
 
 

@@ -164,6 +164,7 @@ export default function Navbar({
                   onChange={(e) => setTempKey(e.target.value)}
                   placeholder="gsk_..."
                   className="input-field"
+                  autoComplete="off"
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>

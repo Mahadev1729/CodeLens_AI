@@ -19,13 +19,13 @@ from rag import (
     load_vectorstore,
     vectorstore_exists,
 )
-from utils.helper import extract_repo_name, safe_read_file, get_language, get_file_size_str
+from utils.helper import normalize_github_url, extract_repo_name, safe_read_file, get_language, get_file_size_str
 
 router = APIRouter(prefix="/api/repo", tags=["Repository"])
 
 
 class CloneRequest(BaseModel):
-    repo_url: str = Field(..., min_length=5)
+    repo_url: str = Field(..., min_length=3)
 
 
 class BuildKbRequest(BaseModel):
@@ -36,15 +36,16 @@ class BuildKbRequest(BaseModel):
 
 @router.post("/clone")
 async def clone_repo_endpoint(req: CloneRequest, current_user: Optional[str] = Depends(get_optional_user)):
-    url = req.repo_url.strip()
-    if not (url.startswith("https://github.com/") or url.startswith("http://github.com/")):
+    raw_url = req.repo_url.strip()
+    normalized_url = normalize_github_url(raw_url)
+    if not normalized_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only GitHub URLs are supported (must start with https://github.com/).",
+            detail="Invalid GitHub repository URL. Please provide a valid GitHub link (e.g. 'https://github.com/user/repo' or 'user/repo').",
         )
 
     try:
-        success, local_path, error = await run_in_threadpool(clone_repository, url)
+        success, local_path, error = await run_in_threadpool(clone_repository, normalized_url)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -58,7 +59,7 @@ async def clone_repo_endpoint(req: CloneRequest, current_user: Optional[str] = D
         )
 
     try:
-        repo_name = extract_repo_name(url)
+        repo_name = extract_repo_name(normalized_url)
         stats = await run_in_threadpool(get_repository_stats, local_path)
         repo_info = await run_in_threadpool(get_repo_info, local_path)
         kb_exists = await run_in_threadpool(vectorstore_exists, repo_name)
@@ -93,9 +94,9 @@ async def clone_repo_endpoint(req: CloneRequest, current_user: Optional[str] = D
                 username=current_user,
                 activity_type="clone",
                 title=f"Cloned repository '{repo_name}'",
-                details=f"Source: {url}",
+                details=f"Source: {normalized_url}",
                 repo_name=repo_name,
-                metadata={"url": url, "files": stats.get("total_files", 0), "lines": stats.get("total_lines", 0)},
+                metadata={"url": normalized_url, "files": stats.get("total_files", 0), "lines": stats.get("total_lines", 0)},
             )
         except Exception as e:
             print(f"[Repo] Warning: Failed to log activity: {e}")
