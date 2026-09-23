@@ -324,6 +324,7 @@ export default function AuthScreen({ onAuthSuccess }) {
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. alex_developer"
                     className="input-field auth-input"
+                    autoComplete="username"
                     autoFocus
                     required
                   />
@@ -340,6 +341,7 @@ export default function AuthScreen({ onAuthSuccess }) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     className="input-field auth-input"
+                    autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                     required
                   />
                 </div>

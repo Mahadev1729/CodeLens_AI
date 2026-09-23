@@ -20,7 +20,7 @@ ACTIVE_MYSQL_DATABASE = MYSQL_DATABASE or "test"
 SQLITE_DB_PATH = PROJECT_DIR / "app_database.db"
 
 
-def _build_mysql_kwargs(database_name: Optional[str] = None) -> dict:
+def _build_mysql_kwargs(database_name: Optional[str] = None, with_database: bool = True) -> dict:
     kwargs = {
         "host": MYSQL_HOST,
         "port": MYSQL_PORT,
@@ -28,9 +28,10 @@ def _build_mysql_kwargs(database_name: Optional[str] = None) -> dict:
         "password": MYSQL_PASSWORD,
         "connection_timeout": 8,
     }
-    db = database_name if database_name is not None else ACTIVE_MYSQL_DATABASE
-    if db:
-        kwargs["database"] = db
+    if with_database:
+        db = database_name if database_name is not None else ACTIVE_MYSQL_DATABASE
+        if db:
+            kwargs["database"] = db
 
     if MYSQL_USE_SSL:
         kwargs["ssl_disabled"] = False

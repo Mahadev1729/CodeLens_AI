@@ -160,6 +160,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 placeholder="developer_123"
                 className="input-field"
                 style={{ width: '100%', paddingLeft: '36px' }}
+                autoComplete="username"
                 required
               />
               <User
@@ -185,6 +186,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 placeholder="••••••••"
                 className="input-field"
                 style={{ width: '100%', paddingLeft: '36px' }}
+                autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                 required
               />
               <Lock
