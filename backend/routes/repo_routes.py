@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from backend.auth import get_current_user, get_optional_user
 from backend.config import PROJECT_DIR
@@ -42,43 +43,62 @@ async def clone_repo_endpoint(req: CloneRequest, current_user: Optional[str] = D
             detail="Only GitHub URLs are supported (must start with https://github.com/).",
         )
 
-    success, local_path, error = clone_repository(url)
+    try:
+        success, local_path, error = await run_in_threadpool(clone_repository, url)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Clone process encountered an error: {str(e)}",
+        )
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Clone failed: {error}",
         )
 
-    repo_name = extract_repo_name(url)
-    stats = get_repository_stats(local_path)
-    repo_info = get_repo_info(local_path)
-    kb_exists = vectorstore_exists(repo_name)
+    try:
+        repo_name = extract_repo_name(url)
+        stats = await run_in_threadpool(get_repository_stats, local_path)
+        repo_info = await run_in_threadpool(get_repo_info, local_path)
+        kb_exists = await run_in_threadpool(vectorstore_exists, repo_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to inspect cloned repository: {str(e)}",
+        )
 
     # Save session state if user is logged in
-    username = current_user or "guest"
-    current_state = get_user_session_state(username)
-    current_state.update({
-        "repo_path": local_path,
-        "repo_name": repo_name,
-        "repo_stats": stats,
-        "knowledge_base_built": kb_exists,
-        "summary_cache": None,
-        "bug_cache": None,
-        "architecture_cache": None,
-        "readme_cache": None,
-        "selected_file": None,
-    })
-    save_user_session_state(username, current_state)
+    try:
+        username = current_user or "guest"
+        current_state = get_user_session_state(username)
+        current_state.update({
+            "repo_path": local_path,
+            "repo_name": repo_name,
+            "repo_stats": stats,
+            "knowledge_base_built": kb_exists,
+            "summary_cache": None,
+            "bug_cache": None,
+            "architecture_cache": None,
+            "readme_cache": None,
+            "selected_file": None,
+        })
+        save_user_session_state(username, current_state)
+    except Exception as e:
+        print(f"[Repo] Warning: Failed to save session state: {e}")
 
     if current_user:
-        log_activity_db(
-            username=current_user,
-            activity_type="clone",
-            title=f"Cloned repository '{repo_name}'",
-            details=f"Source: {url}",
-            repo_name=repo_name,
-            metadata={"url": url, "files": stats.get("total_files", 0), "lines": stats.get("total_lines", 0)},
-        )
+        try:
+            log_activity_db(
+                username=current_user,
+                activity_type="clone",
+                title=f"Cloned repository '{repo_name}'",
+                details=f"Source: {url}",
+                repo_name=repo_name,
+                metadata={"url": url, "files": stats.get("total_files", 0), "lines": stats.get("total_lines", 0)},
+            )
+        except Exception as e:
+            print(f"[Repo] Warning: Failed to log activity: {e}")
 
     return {
         "success": True,
@@ -108,15 +128,15 @@ async def build_kb_endpoint(req: BuildKbRequest, current_user: Optional[str] = D
         repo_name = Path(repo_path).name
 
     try:
-        documents, skipped = load_documents(repo_path)
+        documents, skipped = await run_in_threadpool(load_documents, repo_path)
         if not documents:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No supported code or markdown files found in the repository.",
             )
 
-        chunks = chunk_documents(documents)
-        build_vectorstore(chunks, repo_name)
+        chunks = await run_in_threadpool(chunk_documents, documents)
+        await run_in_threadpool(build_vectorstore, chunks, repo_name)
 
         session_state.update({
             "knowledge_base_built": True,
@@ -142,6 +162,8 @@ async def build_kb_endpoint(req: BuildKbRequest, current_user: Optional[str] = D
             "total_chunks": len(chunks),
             "skipped_files": skipped,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

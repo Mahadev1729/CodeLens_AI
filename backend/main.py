@@ -48,6 +48,7 @@ app.include_router(ai_router)
 app.include_router(activity_router)
 
 
+@app.get("/health")
 @app.get("/api/health")
 def health_check():
     from backend.database import DB_ENGINE
@@ -70,8 +71,8 @@ if FRONTEND_DIST.exists():
 
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
-        # Don't intercept API routes
-        if full_path.startswith("api/"):
+        # Don't intercept API routes, health, docs, or openapi
+        if full_path in ("health", "api/health", "docs", "openapi.json", "redoc") or full_path.startswith("api/"):
             return {"error": "Not Found"}
         
         file_path = FRONTEND_DIST / full_path

@@ -39,11 +39,19 @@ def clone_repository(repo_url: str, progress_callback=None) -> tuple[bool, str, 
                     pct = int((cur_count / max_count) * 100)
                     progress_callback(pct, message or "Cloning...")
 
+        # Disable interactive terminal prompts to prevent hanging
+        clone_env = {
+            **os.environ,
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_ASKPASS": "echo",
+        }
+
         Repo.clone_from(
             repo_url,
             str(local_path),
             progress=CloneProgress() if progress_callback else None,
             depth=1,
+            env=clone_env,
         )
 
         return True, str(local_path), None
@@ -51,9 +59,11 @@ def clone_repository(repo_url: str, progress_callback=None) -> tuple[bool, str, 
     except GitCommandError as e:
         error_msg = str(e)
         if "not found" in error_msg.lower() or "repository" in error_msg.lower():
-            return False, "", "Repository not found or is private. Please check the URL."
-        if "authentication" in error_msg.lower():
-            return False, "", "Authentication failed. Only public repositories are supported."
+            return False, "", "Repository not found or is private. Please verify the URL."
+        if "authentication" in error_msg.lower() or "terminal prompts disabled" in error_msg.lower():
+            return False, "", "Authentication failed. Only public GitHub repositories are supported."
+        if "timed out" in error_msg.lower() or "timeout" in error_msg.lower():
+            return False, "", "Git clone operation timed out. The repository may be too large or GitHub is slow."
         return False, "", f"Git error: {error_msg}"
     except Exception as e:
         return False, "", f"Unexpected error during cloning: {str(e)}"
