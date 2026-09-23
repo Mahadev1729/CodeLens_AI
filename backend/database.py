@@ -14,12 +14,13 @@ from backend.config import (
     PROJECT_DIR,
 )
 
-# Global flag to track active engine
+# Global flag to track active engine and database
 DB_ENGINE = "sqlite"  # 'mysql' or 'sqlite'
+ACTIVE_MYSQL_DATABASE = MYSQL_DATABASE or "test"
 SQLITE_DB_PATH = PROJECT_DIR / "app_database.db"
 
 
-def _build_mysql_kwargs(with_database: bool = True) -> dict:
+def _build_mysql_kwargs(database_name: Optional[str] = None) -> dict:
     kwargs = {
         "host": MYSQL_HOST,
         "port": MYSQL_PORT,
@@ -27,8 +28,9 @@ def _build_mysql_kwargs(with_database: bool = True) -> dict:
         "password": MYSQL_PASSWORD,
         "connection_timeout": 8,
     }
-    if with_database and MYSQL_DATABASE:
-        kwargs["database"] = MYSQL_DATABASE
+    db = database_name if database_name is not None else ACTIVE_MYSQL_DATABASE
+    if db:
+        kwargs["database"] = db
 
     if MYSQL_USE_SSL:
         kwargs["ssl_disabled"] = False
@@ -39,21 +41,38 @@ def _build_mysql_kwargs(with_database: bool = True) -> dict:
 
 
 def _test_and_init_mysql() -> bool:
-    global DB_ENGINE
+    global DB_ENGINE, ACTIVE_MYSQL_DATABASE
     try:
         import mysql.connector
 
-        # Try connecting directly to target database
-        try:
-            db_conn = mysql.connector.connect(**_build_mysql_kwargs(with_database=True))
-        except Exception:
-            # If target database doesn't exist yet, connect to server to create it
-            server_conn = mysql.connector.connect(**_build_mysql_kwargs(with_database=False))
-            cursor = server_conn.cursor()
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-            cursor.close()
-            server_conn.close()
-            db_conn = mysql.connector.connect(**_build_mysql_kwargs(with_database=True))
+        db_conn = None
+        target_dbs = [MYSQL_DATABASE, "test"] if MYSQL_DATABASE and MYSQL_DATABASE != "test" else ["test", MYSQL_DATABASE]
+        # Filter unique non-empty databases
+        target_dbs = [d for i, d in enumerate(target_dbs) if d and d not in target_dbs[:i]]
+
+        # 1. Try connecting directly to candidate databases
+        for db_name in target_dbs:
+            try:
+                db_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name=db_name))
+                ACTIVE_MYSQL_DATABASE = db_name
+                break
+            except Exception as e:
+                print(f"[Database] Could not connect directly to database '{db_name}': {e}")
+
+        # 2. If direct database connections failed, try connecting without DB and creating it
+        if db_conn is None:
+            try:
+                server_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name=""))
+                cursor = server_conn.cursor()
+                target_db = MYSQL_DATABASE or "test"
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{target_db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+                cursor.close()
+                server_conn.close()
+                db_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name=target_db))
+                ACTIVE_MYSQL_DATABASE = target_db
+            except Exception as e:
+                print(f"[Database] Could not create target database: {e}")
+                raise e
 
         cur = db_conn.cursor()
 
@@ -116,7 +135,7 @@ def _test_and_init_mysql() -> bool:
         db_conn.close()
 
         DB_ENGINE = "mysql"
-        print(f"[Database] Successfully connected to TiDB / MySQL database '{MYSQL_DATABASE}' at {MYSQL_HOST}:{MYSQL_PORT}")
+        print(f"[Database] Successfully connected to TiDB / MySQL database '{ACTIVE_MYSQL_DATABASE}' at {MYSQL_HOST}:{MYSQL_PORT}")
         return True
     except Exception as e:
         print(f"[Database] TiDB / MySQL connection/initialization error: {e}. Falling back to SQLite.")
