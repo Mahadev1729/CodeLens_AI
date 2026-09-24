@@ -9,7 +9,8 @@ import {
   Loader2, 
   CheckCircle, 
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -20,6 +21,8 @@ export default function Sidebar({
   onBuildKb,
   isCloning,
   isBuildingKb,
+  isOpen = false,
+  onClose,
 }) {
   const [repoUrl, setRepoUrl] = useState('');
 
@@ -37,7 +40,24 @@ export default function Sidebar({
     .slice(0, 6);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+      {/* Mobile Drawer Header with Close Button */}
+      <div className="sidebar-mobile-header">
+        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+          Repositories & Settings
+        </span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="btn btn-icon"
+            title="Close sidebar"
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
       {/* 1. Clone New Repo */}
       <div className="sidebar-section">
         <div className="section-title">

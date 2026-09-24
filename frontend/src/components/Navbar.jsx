@@ -8,7 +8,11 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Settings,
-  Cpu
+  Cpu,
+  Menu,
+  X,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react';
 
 export default function Navbar({
@@ -20,9 +24,12 @@ export default function Navbar({
   onApiKeyChange,
   selectedModel,
   onModelChange,
+  isSidebarOpen,
+  onToggleSidebar,
 }) {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKey, setTempKey] = useState(groqApiKey || '');
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleSaveKey = (e) => {
     e.preventDefault();
@@ -35,25 +42,38 @@ export default function Navbar({
   return (
     <>
       <header className="navbar">
-        {/* Left: Brand */}
-        <div className="nav-brand">
-          <Brain size={28} style={{ color: '#58a6ff' }} />
-          <span>CodeMentorAI</span>
-          <span className="brand-badge">FastAPI + React</span>
+        {/* Left: Hamburger (Mobile) + Brand */}
+        <div className="nav-left-group">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="btn btn-icon sidebar-toggle-btn"
+              title="Toggle Repository Sidebar"
+              aria-label="Toggle Sidebar"
+            >
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
+
+          <div className="nav-brand">
+            <Brain size={26} style={{ color: '#58a6ff', flexShrink: 0 }} />
+            <span className="brand-text">CodeMentorAI</span>
+            <span className="brand-badge">FastAPI + React</span>
+          </div>
         </div>
 
         {/* Center: Active Repo Badge */}
         <div className="nav-center">
           {activeRepo ? (
-            <div className="active-repo-badge">
-              <GitBranch size={16} style={{ color: '#3fb950' }} />
-              <strong>{activeRepo.name}</strong>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+            <div className="active-repo-badge" title={`Active: ${activeRepo.name} (${activeRepo.info?.branch || 'main'})`}>
+              <GitBranch size={15} style={{ color: '#3fb950', flexShrink: 0 }} />
+              <strong className="repo-badge-name">{activeRepo.name}</strong>
+              <span className="repo-badge-branch" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                 ({activeRepo.info?.branch || 'main'})
               </span>
               {activeRepo.knowledgeBaseBuilt ? (
                 <span className="status-badge status-ready" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>
-                  ⚡ KB Ready
+                  ⚡ KB
                 </span>
               ) : (
                 <span className="status-badge status-pending" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>
@@ -63,21 +83,20 @@ export default function Navbar({
             </div>
           ) : (
             <div className="active-repo-badge" style={{ color: 'var(--text-muted)' }}>
-              <span>No Repository Loaded</span>
+              <span className="repo-badge-empty">No Repo Selected</span>
             </div>
           )}
         </div>
 
-        {/* Right: Model Picker, API Key, User */}
-        <div className="nav-right">
+        {/* Right: Desktop Controls */}
+        <div className="nav-right desktop-nav-controls">
           {/* Model Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Cpu size={16} style={{ color: 'var(--text-secondary)' }} />
+          <div className="model-selector-wrapper">
+            <Cpu size={15} style={{ color: 'var(--text-secondary)' }} />
             <select
               value={selectedModel}
               onChange={(e) => onModelChange(e.target.value)}
-              className="select-field"
-              style={{ padding: '6px 10px', fontSize: '0.8rem', background: 'var(--bg-tertiary)' }}
+              className="select-field nav-model-select"
             >
               <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
               <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
@@ -89,11 +108,11 @@ export default function Navbar({
           {/* API Key Button */}
           <button
             onClick={() => setShowKeyModal(true)}
-            className="btn btn-outline"
-            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            className="btn btn-outline nav-key-btn"
+            title="Configure Groq API Key"
           >
             <Key size={14} />
-            <span>API Key</span>
+            <span className="btn-text">API Key</span>
             {isKeyValid ? (
               <CheckCircle2 size={14} style={{ color: 'var(--accent-green)' }} />
             ) : (
@@ -103,38 +122,117 @@ export default function Navbar({
 
           {/* User Status / Login */}
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'var(--bg-tertiary)',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                }}
-              >
-                <User size={15} style={{ color: 'var(--accent-purple)' }} />
-                <strong>{user}</strong>
+            <div className="nav-user-container">
+              <div className="nav-user-pill" title={`Logged in as ${user}`}>
+                <User size={14} style={{ color: 'var(--accent-purple)' }} />
+                <span className="nav-user-name">{user}</span>
               </div>
               <button
                 onClick={onLogout}
-                className="btn btn-outline"
-                style={{ padding: '6px 10px', fontSize: '0.8rem' }}
+                className="btn btn-outline nav-logout-btn"
                 title="Log Out"
               >
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
-            <button onClick={onOpenAuth} className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+            <button onClick={onOpenAuth} className="btn btn-primary nav-signin-btn">
               <User size={15} />
               <span>Sign In</span>
             </button>
           )}
         </div>
+
+        {/* Right: Mobile Menu Toggle Button */}
+        <div className="mobile-nav-toggle-group">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className={`btn btn-icon mobile-menu-btn ${showMobileMenu ? 'active' : ''}`}
+            title="Open Menu"
+            aria-label="Open Navigation Menu"
+          >
+            <SlidersHorizontal size={18} />
+          </button>
+        </div>
       </header>
+
+      {/* Mobile Controls Collapsible Dropdown */}
+      {showMobileMenu && (
+        <div className="mobile-nav-dropdown">
+          <div className="mobile-nav-row">
+            <label className="mobile-nav-label">
+              <Cpu size={14} />
+              <span>LLM Model</span>
+            </label>
+            <select
+              value={selectedModel}
+              onChange={(e) => {
+                onModelChange(e.target.value);
+              }}
+              className="select-field"
+              style={{ width: '100%', fontSize: '0.85rem' }}
+            >
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+              <option value="gemma2-9b-it">Gemma 2 9B (Google)</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k)</option>
+            </select>
+          </div>
+
+          <div className="mobile-nav-actions">
+            <button
+              onClick={() => {
+                setShowMobileMenu(false);
+                setShowKeyModal(true);
+              }}
+              className="btn btn-outline"
+              style={{ flex: 1, justifyContent: 'center' }}
+            >
+              <Key size={14} />
+              <span>API Key</span>
+              {isKeyValid ? (
+                <CheckCircle2 size={14} style={{ color: 'var(--accent-green)' }} />
+              ) : (
+                <AlertCircle size={14} style={{ color: 'var(--accent-orange)' }} />
+              )}
+            </button>
+
+            {user ? (
+              <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                <div
+                  className="nav-user-pill"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  <User size={14} style={{ color: 'var(--accent-purple)' }} />
+                  <span className="nav-user-name">{user}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    onLogout();
+                  }}
+                  className="btn btn-outline"
+                  title="Log Out"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenAuth();
+                }}
+                className="btn btn-primary"
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                <User size={14} />
+                <span>Sign In</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* API Key Modal */}
       {showKeyModal && (
@@ -186,3 +284,4 @@ export default function Navbar({
     </>
   );
 }
+

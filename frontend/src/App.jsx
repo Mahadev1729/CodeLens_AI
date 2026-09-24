@@ -42,6 +42,9 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   
+  // UI Mobile Drawer State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   // Repository State
   const [activeRepo, setActiveRepo] = useState(null);
   const [localRepos, setLocalRepos] = useState([]);
@@ -227,6 +230,8 @@ export default function App() {
         onApiKeyChange={handleApiKeyChange}
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
       {/* 2. Notification Toast */}
@@ -268,15 +273,28 @@ export default function App() {
 
       {/* 3. Main Workspace Layout */}
       <div className="main-layout">
+        {/* Mobile Sidebar Overlay Backdrop */}
+        {isSidebarOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <Sidebar
           activeRepo={activeRepo}
           localRepos={localRepos}
-          onSelectRepo={handleSelectRepo}
+          onSelectRepo={(repo) => {
+            handleSelectRepo(repo);
+            setIsSidebarOpen(false);
+          }}
           onCloneRepo={handleCloneRepo}
           onBuildKb={handleBuildKb}
           isCloning={isCloning}
           isBuildingKb={isBuildingKb}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         {/* Content Tabs Area */}
