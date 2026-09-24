@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     curl \
+    graphviz \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements (pre-install lightweight CPU-only PyTorch and pre-download model weights)

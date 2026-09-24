@@ -236,7 +236,7 @@ export const api = {
       90000
     ),
 
-  generateArchitecture: (repoPath, repoName, apiKey, model, regenerate = false) =>
+  generateArchitecture: (repoPath, repoName, apiKey, model, regenerate = false, format = 'python') =>
     request(
       '/ai/architecture',
       {
@@ -247,6 +247,7 @@ export const api = {
           api_key: apiKey,
           model,
           regenerate,
+          format,
         }),
       },
       90000

@@ -20,6 +20,8 @@ from rag import (
     parse_bugs,
     generate_architecture,
     extract_mermaid_diagram,
+    extract_python_diagram,
+    render_python_diagram,
     generate_readme,
     load_vectorstore,
     vectorstore_exists,
@@ -74,6 +76,7 @@ class ArchitectureRequest(BaseModel):
     api_key: Optional[str] = None
     model: Optional[str] = None
     regenerate: bool = False
+    format: str = "python"  # "python" (Diagram-as-Code) or "mermaid"
 
 
 class ReadmeRequest(BaseModel):
@@ -281,40 +284,53 @@ async def architecture_endpoint(req: ArchitectureRequest, current_user: Optional
             detail="Valid repository path is required.",
         )
 
-    if not req.regenerate and session_state.get("architecture_cache"):
-        arch_text = session_state["architecture_cache"]
-        diagram_code, notes = extract_mermaid_diagram(arch_text)
-        return {
-            "raw": arch_text,
-            "diagram_code": diagram_code,
-            "notes": notes,
-            "cached": True,
-        }
+    diag_format = (req.format or "python").lower().strip()
+    cache_key = f"architecture_cache_{diag_format}"
+
+    if not req.regenerate and session_state.get(cache_key):
+        cached_data = session_state[cache_key]
+        return {**cached_data, "cached": True}
 
     api_key = _resolve_api_key(req.api_key, username)
     model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
 
     try:
-        arch_text = generate_architecture(repo_path, api_key, model)
-        session_state["architecture_cache"] = arch_text
-        save_user_session_state(username, session_state)
+        arch_text = generate_architecture(repo_path, api_key, model, diagram_type=diag_format)
 
-        diagram_code, notes = extract_mermaid_diagram(arch_text)
+        if diag_format == "mermaid":
+            diagram_code, notes = extract_mermaid_diagram(arch_text)
+            resp_payload = {
+                "format": "mermaid",
+                "raw": arch_text,
+                "diagram_code": diagram_code,
+                "notes": notes,
+                "cached": False,
+            }
+        else:
+            diagram_code, notes = extract_python_diagram(arch_text)
+            render_res = render_python_diagram(diagram_code)
+            resp_payload = {
+                "format": "python",
+                "raw": arch_text,
+                "diagram_code": diagram_code,
+                "image_base64": render_res.get("image_base64"),
+                "render_error": render_res.get("error"),
+                "notes": notes,
+                "cached": False,
+            }
+
+        session_state[cache_key] = resp_payload
+        save_user_session_state(username, session_state)
 
         if current_user:
             log_activity_db(
                 username=current_user,
                 activity_type="architecture",
-                title=f"Generated Architecture Diagram for '{repo_name}'",
+                title=f"Generated {diag_format.capitalize()} Architecture for '{repo_name}'",
                 repo_name=repo_name,
             )
 
-        return {
-            "raw": arch_text,
-            "diagram_code": diagram_code,
-            "notes": notes,
-            "cached": False,
-        }
+        return resp_payload
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

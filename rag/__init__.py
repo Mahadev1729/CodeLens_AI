@@ -13,7 +13,12 @@ from rag.ingestion.chunker import chunk_documents, get_text_splitter
 from rag.ingestion.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
 from rag.llm.summary import generate_summary
 from rag.llm.bugfinder import find_bugs, parse_bugs
-from rag.llm.architecture import generate_architecture, extract_mermaid_diagram
+from rag.llm.architecture import (
+    generate_architecture,
+    extract_mermaid_diagram,
+    extract_python_diagram,
+    render_python_diagram,
+)
 from rag.llm.readme_generator import generate_readme
 
 import rag.ingestion as ingestion
@@ -44,6 +49,8 @@ __all__ = [
     "parse_bugs",
     "generate_architecture",
     "extract_mermaid_diagram",
+    "extract_python_diagram",
+    "render_python_diagram",
     "generate_readme",
     "ingestion",
     "retrieval",
