@@ -325,6 +325,12 @@ export default function App() {
                 groqApiKey={groqApiKey}
                 selectedModel={selectedModel}
                 onOpenFileInExplorer={handleOpenFileInExplorer}
+                localRepos={localRepos}
+                onSelectRepo={handleSelectRepo}
+                onCloneRepo={handleCloneRepo}
+                onBuildKb={handleBuildKb}
+                isCloning={isCloning}
+                isBuildingKb={isBuildingKb}
               />
             )}
 

@@ -7,11 +7,12 @@ import {
   AlertCircle, 
   CheckCircle, 
   Sparkles, 
-  Terminal, 
   ShieldCheck, 
   Zap, 
   Layers,
-  HelpCircle,
+  GitFork,
+  Bug,
+  Compass,
   X
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -55,7 +56,6 @@ export default function AuthScreen({ onAuthSuccess }) {
   const googleBtnRef = useRef(null);
 
   useEffect(() => {
-    // 1. Fetch Auth Config to see if Google Client ID is configured
     api.getAuthConfig()
       .then((cfg) => {
         if (cfg.google_client_id) {
@@ -69,8 +69,6 @@ export default function AuthScreen({ onAuthSuccess }) {
 
   const initGoogleClient = (clientId) => {
     if (!clientId) return;
-
-    // Load Google Identity Services script if not already present
     if (!window.google) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
@@ -92,7 +90,6 @@ export default function AuthScreen({ onAuthSuccess }) {
         cancel_on_tap_outside: true,
       });
 
-      // Render custom Google button if container exists
       if (googleBtnRef.current) {
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'filled_black',
@@ -120,7 +117,7 @@ export default function AuthScreen({ onAuthSuccess }) {
       setSuccessMsg(`Welcome, ${res.username}!`);
       setTimeout(() => {
         onAuthSuccess(res.username, res.session_state);
-      }, 500);
+      }, 400);
     } catch (err) {
       setError(err.message || 'Google authentication failed.');
     } finally {
@@ -136,9 +133,14 @@ export default function AuthScreen({ onAuthSuccess }) {
         console.warn('Google prompt fallback:', e);
       }
     } else {
-      // Guide user on how to enable Google Auth
       setShowGoogleGuide(true);
     }
+  };
+
+  const handleGuestEntry = () => {
+    const guestUser = 'guest_dev';
+    localStorage.setItem('codementor_user', guestUser);
+    onAuthSuccess(guestUser, {});
   };
 
   const handleSubmit = async (e) => {
@@ -165,10 +167,10 @@ export default function AuthScreen({ onAuthSuccess }) {
         setSuccessMsg('Account created successfully! Redirecting...');
         setTimeout(() => {
           onAuthSuccess(res.username, {});
-        }, 600);
+        }, 500);
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setError(err.message || 'Authentication failed. Please check credentials.');
     } finally {
       setLoading(false);
     }
@@ -176,78 +178,106 @@ export default function AuthScreen({ onAuthSuccess }) {
 
   return (
     <div className="auth-fullscreen-container">
-      {/* Dynamic Ambient Background Glows */}
+      {/* Ambient Radial Glows */}
       <div className="auth-glow-top" />
       <div className="auth-glow-bottom" />
 
       <div className="auth-content-wrapper">
-        {/* Left / Hero Column */}
+        {/* Left Hero Column */}
         <div className="auth-hero-column">
           <div className="auth-brand-badge">
-            <Sparkles size={15} style={{ color: 'var(--accent-blue)' }} />
-            <span>AI-Driven Code Intelligence</span>
+            <Sparkles size={14} style={{ color: 'var(--accent-blue)' }} />
+            <span>AI Codebase Intelligence</span>
           </div>
 
           <h1 className="auth-hero-title">
-            Understand, Debug & Mentor <br />
-            <span className="gradient-text">Any Codebase in Seconds</span>
+            Understand & Mentor <br />
+            <span className="gradient-text">Any Codebase Instantly</span>
           </h1>
 
           <p className="auth-hero-description">
-            Sign in to unlock interactive AST-powered RAG chat, multi-file bug audits, 
-            Mermaid architecture visualizers, and seamless session persistence.
+            RAG semantic search, automated vulnerability scans, and interactive Diagram-as-Code architecture models in seconds.
           </p>
 
-          <div className="auth-features-list">
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <Zap size={18} style={{ color: 'var(--accent-blue)' }} />
+          {/* Clean 2x2 Feature Grid */}
+          <div className="hero-feature-grid">
+            <div className="hero-feature-pill">
+              <div className="hero-pill-icon" style={{ background: 'rgba(88, 166, 255, 0.15)', color: 'var(--accent-blue)' }}>
+                <Zap size={16} />
               </div>
               <div>
-                <div className="auth-feature-title">Ultra-Fast Groq Inference</div>
-                <div className="auth-feature-sub">Deep reasoning with GPT-OSS 120B & LLaMA 3.1</div>
+                <div className="hero-pill-title">Groq LLM Reasoning</div>
+                <div className="hero-pill-sub">GPT-OSS 120B & LLaMA 3.1</div>
               </div>
             </div>
 
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <Layers size={18} style={{ color: 'var(--accent-purple)' }} />
+            <div className="hero-feature-pill">
+              <div className="hero-pill-icon" style={{ background: 'rgba(188, 140, 255, 0.15)', color: 'var(--accent-purple)' }}>
+                <Layers size={16} />
               </div>
               <div>
-                <div className="auth-feature-title">FAISS Vector Code Search</div>
-                <div className="auth-feature-sub">Context-aware embeddings matched directly to AST nodes</div>
+                <div className="hero-pill-title">FAISS Vector Search</div>
+                <div className="hero-pill-sub">Semantic code citations</div>
               </div>
             </div>
 
-            <div className="auth-feature-item">
-              <div className="auth-feature-icon-box">
-                <ShieldCheck size={18} style={{ color: 'var(--accent-green)' }} />
+            <div className="hero-feature-pill">
+              <div className="hero-pill-icon" style={{ background: 'rgba(57, 211, 83, 0.15)', color: 'var(--accent-green)' }}>
+                <GitFork size={16} />
               </div>
               <div>
-                <div className="auth-feature-title">TiDB Cloud Persistence</div>
-                <div className="auth-feature-sub">Safe encrypted sessions, chat memory & activity logging</div>
+                <div className="hero-pill-title">Diagram-as-Code</div>
+                <div className="hero-pill-sub">Python Diagrams & Mermaid</div>
+              </div>
+            </div>
+
+            <div className="hero-feature-pill">
+              <div className="hero-pill-icon" style={{ background: 'rgba(240, 136, 62, 0.15)', color: 'var(--accent-orange)' }}>
+                <Bug size={16} />
+              </div>
+              <div>
+                <div className="hero-pill-title">Bug & Security Audits</div>
+                <div className="hero-pill-sub">Severity scoring & fixes</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Glassmorphism Authentication Form */}
+        {/* Right Column: Glassmorphism Auth Card */}
         <div className="auth-card-container">
           <div className="auth-card">
-            {/* Header / Logo */}
+            {/* Header */}
             <div className="auth-card-header">
               <div className="auth-logo-icon">
-                <Brain size={30} style={{ color: 'var(--accent-blue)' }} />
+                <Brain size={28} style={{ color: 'var(--accent-blue)' }} />
               </div>
               <h2 className="auth-card-title">
-                {tab === 'login' ? 'Welcome Back' : 'Create an Account'}
+                {tab === 'login' ? 'Welcome Back' : 'Create Account'}
               </h2>
               <p className="auth-card-subtitle">
-                {tab === 'login' 
-                  ? 'Sign in to access your repositories & workspaces' 
-                  : 'Get started with your free CodeMentorAI account'}
+                {tab === 'login' ? 'Sign in to access your workspace' : 'Get started in seconds'}
               </p>
             </div>
+
+            {/* Quick Guest Entry Button */}
+            <button
+              type="button"
+              onClick={handleGuestEntry}
+              className="btn btn-secondary"
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+                padding: '10px 16px',
+                fontSize: '0.88rem',
+                gap: '8px',
+                background: 'rgba(88, 166, 255, 0.1)',
+                borderColor: 'rgba(88, 166, 255, 0.3)',
+                color: '#fff',
+              }}
+            >
+              <Compass size={16} style={{ color: 'var(--accent-blue)' }} />
+              <span>Explore Workspace as Guest</span>
+            </button>
 
             {/* Google Authentication Button */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -256,11 +286,10 @@ export default function AuthScreen({ onAuthSuccess }) {
                 onClick={handleGoogleClick}
                 className="btn-google-auth"
               >
-                <GoogleIcon size={19} />
+                <GoogleIcon size={18} />
                 <span>Continue with Google</span>
               </button>
 
-              {/* Hidden Google SDK container if active */}
               {googleAvailable && (
                 <div ref={googleBtnRef} style={{ display: 'none' }} />
               )}
@@ -268,10 +297,10 @@ export default function AuthScreen({ onAuthSuccess }) {
 
             {/* Divider */}
             <div className="auth-divider">
-              <span>or continue with username</span>
+              <span>or account credentials</span>
             </div>
 
-            {/* Toggle Tabs (Sign In / Register) */}
+            {/* Tabs */}
             <div className="auth-tabs">
               <button
                 type="button"
@@ -300,14 +329,14 @@ export default function AuthScreen({ onAuthSuccess }) {
             {/* Alerts */}
             {error && (
               <div className="auth-alert-error">
-                <AlertCircle size={17} style={{ flexShrink: 0 }} />
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
                 <span>{error}</span>
               </div>
             )}
 
             {successMsg && (
               <div className="auth-alert-success">
-                <CheckCircle size={17} style={{ flexShrink: 0 }} />
+                <CheckCircle size={16} style={{ flexShrink: 0 }} />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -317,15 +346,14 @@ export default function AuthScreen({ onAuthSuccess }) {
               <div className="input-group">
                 <label className="input-label">Username</label>
                 <div className="auth-input-wrapper">
-                  <User size={16} className="auth-field-icon" />
+                  <User size={15} className="auth-field-icon" />
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. alex_developer"
+                    placeholder="Enter username"
                     className="input-field auth-input"
                     autoComplete="username"
-                    autoFocus
                     required
                   />
                 </div>
@@ -334,7 +362,7 @@ export default function AuthScreen({ onAuthSuccess }) {
               <div className="input-group">
                 <label className="input-label">Password</label>
                 <div className="auth-input-wrapper">
-                  <Lock size={16} className="auth-field-icon" />
+                  <Lock size={15} className="auth-field-icon" />
                   <input
                     type="password"
                     value={password}
@@ -352,63 +380,44 @@ export default function AuthScreen({ onAuthSuccess }) {
                 disabled={loading}
                 className="btn btn-primary auth-submit-btn"
               >
-                <span>
-                  {loading 
-                    ? 'Authenticating...' 
-                    : tab === 'login' 
-                    ? 'Sign In to Workspace' 
-                    : 'Create Account & Enter'}
-                </span>
-                <ArrowRight size={17} />
+                <span>{loading ? 'Authenticating...' : tab === 'login' ? 'Sign In' : 'Create Account'}</span>
+                <ArrowRight size={16} />
               </button>
             </form>
-
-            <div className="auth-footer-hint">
-              <Terminal size={14} style={{ color: 'var(--text-muted)' }} />
-              <span>Session stored securely in encrypted TiDB database</span>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Google Setup Guide Modal (Shows if user clicks Google auth before configuring client ID) */}
+      {/* Google Setup Guide Modal */}
       {showGoogleGuide && (
         <div className="modal-overlay" onClick={() => setShowGoogleGuide(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <GoogleIcon size={22} />
-                <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>Enable Google Authentication</h3>
+                <GoogleIcon size={20} />
+                <h3 style={{ fontSize: '1.15rem', color: '#fff' }}>Google Authentication</h3>
               </div>
               <button
                 onClick={() => setShowGoogleGuide(false)}
-                className="btn btn-outline"
-                style={{ padding: '6px', borderRadius: '50%' }}
+                className="btn btn-icon"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '16px' }}>
-              To enable 1-click Google Sign-In, add your <strong>Google OAuth Client ID</strong> to your <code>.env</code> file:
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px' }}>
+              Add your <strong>Google OAuth Client ID</strong> to your <code>.env</code> file:
             </p>
 
-            <div style={{ background: 'var(--bg-primary)', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--accent-blue)' }}>
-              GOOGLE_CLIENT_ID=your_client_id_here.apps.googleusercontent.com
+            <div style={{ background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent-blue)', wordBreak: 'break-all' }}>
+              GOOGLE_CLIENT_ID=your_id.apps.googleusercontent.com
             </div>
-
-            <ol style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.7, paddingLeft: '20px', marginBottom: '20px' }}>
-              <li>Open <strong>Google Cloud Console</strong> &rarr; <em>APIs & Services</em> &rarr; <em>Credentials</em>.</li>
-              <li>Create an <strong>OAuth 2.0 Client ID</strong> (Web Application).</li>
-              <li>Add <code>http://localhost:5173</code> (or your Render URL) to <em>Authorized JavaScript Origins</em>.</li>
-              <li>Paste the Client ID into <code>.env</code> and restart the backend.</li>
-            </ol>
 
             <button
               onClick={() => setShowGoogleGuide(false)}
               className="btn btn-primary btn-block"
             >
-              Got It!
+              Got It
             </button>
           </div>
         </div>
@@ -416,3 +425,4 @@ export default function AuthScreen({ onAuthSuccess }) {
     </div>
   );
 }
+

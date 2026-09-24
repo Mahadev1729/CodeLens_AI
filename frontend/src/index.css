@@ -1066,47 +1066,64 @@ body {
 }
 
 .auth-hero-description {
-  font-size: 1rem;
+  font-size: 0.98rem;
   color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 520px;
+  line-height: 1.5;
+  max-width: 480px;
 }
 
-.auth-features-list {
+.hero-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (max-width: 580px) {
+  .hero-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hero-feature-pill {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 10px;
-}
-
-.auth-feature-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.auth-feature-icon-box {
-  width: 40px;
-  height: 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
   border-radius: var(--radius-md);
-  background: var(--bg-tertiary);
+  background: rgba(22, 27, 34, 0.7);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.hero-feature-pill:hover {
+  border-color: rgba(88, 166, 255, 0.4);
+  transform: translateY(-2px);
+  background: rgba(22, 27, 34, 0.9);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.hero-pill-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.auth-feature-title {
+.hero-pill-title {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--text-primary);
 }
 
-.auth-feature-sub {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
+.hero-pill-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 1px;
 }
 
 /* Card Styling */
