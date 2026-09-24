@@ -1,5 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
+from starlette.concurrency import run_in_threadpool
 
 from backend.auth import get_current_user, get_optional_user
 from backend.database import (
@@ -20,7 +21,8 @@ async def get_activities(
     current_user: Optional[str] = Depends(get_optional_user),
 ):
     username = current_user or "guest"
-    activities = get_user_activities_db(
+    activities = await run_in_threadpool(
+        get_user_activities_db,
         username=username,
         limit=limit,
         activity_type=activity_type,
@@ -32,15 +34,15 @@ async def get_activities(
 @router.post("/clear")
 async def clear_activities(current_user: Optional[str] = Depends(get_optional_user)):
     username = current_user or "guest"
-    success = clear_user_activities_db(username)
+    success = await run_in_threadpool(clear_user_activities_db, username)
     return {"success": success}
 
 
 @router.get("/stats")
 async def get_activity_stats(current_user: Optional[str] = Depends(get_optional_user)):
     username = current_user or "guest"
-    activities = get_user_activities_db(username=username, limit=1000)
-    chat_history = get_chat_history_db(username=username, limit=1000)
+    activities = await run_in_threadpool(get_user_activities_db, username=username, limit=1000)
+    chat_history = await run_in_threadpool(get_chat_history_db, username=username, limit=1000)
 
     user_questions = [m for m in chat_history if m.get("role") == "user"]
     distinct_repos = list(set(a.get("repo_name") for a in activities if a.get("repo_name")))
@@ -71,7 +73,7 @@ async def get_chat_history_endpoint(
     current_user: Optional[str] = Depends(get_optional_user),
 ):
     username = current_user or "guest"
-    history = get_chat_history_db(username=username, repo_name=repo_name, limit=limit)
+    history = await run_in_threadpool(get_chat_history_db, username=username, repo_name=repo_name, limit=limit)
     return {"chat_history": history}
 
 
@@ -81,5 +83,5 @@ async def clear_chat_history_endpoint(
     current_user: Optional[str] = Depends(get_optional_user),
 ):
     username = current_user or "guest"
-    success = clear_user_chat_history(username=username, repo_name=repo_name)
+    success = await run_in_threadpool(clear_user_chat_history, username=username, repo_name=repo_name)
     return {"success": success}

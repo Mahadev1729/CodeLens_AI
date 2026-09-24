@@ -11,6 +11,9 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from backend.config import CORS_ORIGINS
 from backend.database import init_db
 from backend.routes.auth_routes import router as auth_router
@@ -18,10 +21,22 @@ from backend.routes.repo_routes import router as repo_router
 from backend.routes.ai_routes import router as ai_router
 from backend.routes.activity_routes import router as activity_router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Non-blocking background database initialization so port binds immediately
+    print("[CodeMentorAI] Server startup: scheduling background database initialization...")
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, init_db)
+    yield
+    print("[CodeMentorAI] Server shutting down...")
+
+
 app = FastAPI(
     title="CodeMentorAI Backend API",
     description="FastAPI backend powering CodeMentorAI with Groq LLMs, FAISS Vector Search, and TiDB/MySQL database",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 # CORS Configuration
@@ -32,13 +47,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def on_startup():
-    print("[CodeMentorAI] Initializing database...")
-    init_db()
-    print("[CodeMentorAI] Server startup complete.")
 
 
 # Register API Routers
@@ -83,6 +91,14 @@ if FRONTEND_DIST.exists():
         if index_file.exists():
             return FileResponse(index_file)
         return {"error": "Frontend build not found"}
+else:
+    @app.get("/")
+    def root():
+        return {
+            "status": "ok",
+            "service": "CodeMentorAI Backend API",
+            "message": "Backend is running. In production, the React frontend is served here.",
+        }
 
 
 if __name__ == "__main__":

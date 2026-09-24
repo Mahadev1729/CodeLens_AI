@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  Brain,
   MessageSquare, 
   FileText, 
   Bug, 

@@ -14,10 +14,14 @@ from backend.config import (
     PROJECT_DIR,
 )
 
+import threading
+
 # Global flag to track active engine and database
 DB_ENGINE = "sqlite"  # 'mysql' or 'sqlite'
 ACTIVE_MYSQL_DATABASE = MYSQL_DATABASE or "test"
 SQLITE_DB_PATH = PROJECT_DIR / "app_database.db"
+_DB_LOCK = threading.Lock()
+_DB_INITIALIZED = False
 
 
 def _build_mysql_kwargs(database_name: Optional[str] = None, with_database: bool = True) -> dict:
@@ -26,7 +30,7 @@ def _build_mysql_kwargs(database_name: Optional[str] = None, with_database: bool
         "port": MYSQL_PORT,
         "user": MYSQL_USER,
         "password": MYSQL_PASSWORD,
-        "connection_timeout": 8,
+        "connection_timeout": 5,
     }
     if with_database:
         db = database_name if database_name is not None else ACTIVE_MYSQL_DATABASE
@@ -47,11 +51,9 @@ def _test_and_init_mysql() -> bool:
         import mysql.connector
 
         db_conn = None
-        target_dbs = [MYSQL_DATABASE, "test"] if MYSQL_DATABASE and MYSQL_DATABASE != "test" else ["test", MYSQL_DATABASE]
-        # Filter unique non-empty databases
-        target_dbs = [d for i, d in enumerate(target_dbs) if d and d not in target_dbs[:i]]
+        target_dbs = [MYSQL_DATABASE] if MYSQL_DATABASE else ["test"]
 
-        # 1. Try connecting directly to candidate databases
+        # 1. Try connecting directly to target database
         for db_name in target_dbs:
             try:
                 db_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name=db_name))
@@ -63,7 +65,7 @@ def _test_and_init_mysql() -> bool:
         # 2. If direct database connections failed, try connecting without DB and creating it
         if db_conn is None:
             try:
-                server_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name=""))
+                server_conn = mysql.connector.connect(**_build_mysql_kwargs(database_name="", with_database=False))
                 cursor = server_conn.cursor()
                 target_db = MYSQL_DATABASE or "test"
                 cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{target_db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
@@ -202,9 +204,16 @@ def _init_sqlite():
         conn.close()
 
 
-def init_db():
-    if not _test_and_init_mysql():
-        _init_sqlite()
+def init_db(force: bool = False):
+    global _DB_INITIALIZED
+    if _DB_INITIALIZED and not force:
+        return
+    with _DB_LOCK:
+        if _DB_INITIALIZED and not force:
+            return
+        if not _test_and_init_mysql():
+            _init_sqlite()
+        _DB_INITIALIZED = True
 
 
 def get_mysql_connection():
