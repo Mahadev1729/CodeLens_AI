@@ -1,4 +1,5 @@
 import os
+import gc
 from pathlib import Path
 from typing import Optional
 from langchain_core.documents import Document
@@ -9,6 +10,8 @@ from rag.embeddings import get_embeddings
 from backend.config import PROJECT_DIR
 
 VECTORSTORE_DIR = PROJECT_DIR / "vectorstore"
+MAX_INDEX_CHUNKS = 250
+BATCH_SIZE = 25
 
 
 def get_vectorstore_path(repo_name: str) -> str:
@@ -20,8 +23,19 @@ def build_vectorstore(chunks: list[Document], repo_name: str) -> FAISS:
     store_path = get_vectorstore_path(repo_name)
     Path(store_path).mkdir(parents=True, exist_ok=True)
 
-    vectorstore = FAISS.from_documents(chunks, embeddings)
-    vectorstore.save_local(store_path)
+    target_chunks = chunks[:MAX_INDEX_CHUNKS]
+    vectorstore = None
+    for i in range(0, len(target_chunks), BATCH_SIZE):
+        batch = target_chunks[i:i + BATCH_SIZE]
+        if vectorstore is None:
+            vectorstore = FAISS.from_documents(batch, embeddings)
+        else:
+            vectorstore.add_documents(batch)
+        gc.collect()
+
+    if vectorstore is not None:
+        vectorstore.save_local(store_path)
+    gc.collect()
     return vectorstore
 
 
