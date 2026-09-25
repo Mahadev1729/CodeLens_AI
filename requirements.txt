@@ -22,4 +22,5 @@ pygments>=2.18.0
 torch>=2.2.0
 diagrams>=0.25.1
 graphviz>=0.20.3
+fastembed>=0.2.0
 

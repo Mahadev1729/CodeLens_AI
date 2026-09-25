@@ -35,7 +35,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt && \
-    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+    python -c "try:\n    from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')\nexcept Exception:\n    pass"
 
 # Copy application source code
 COPY backend/ ./backend/

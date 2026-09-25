@@ -10,8 +10,8 @@ from rag.embeddings import get_embeddings
 from backend.config import PROJECT_DIR
 
 VECTORSTORE_DIR = PROJECT_DIR / "vectorstore"
-MAX_INDEX_CHUNKS = 250
-BATCH_SIZE = 25
+MAX_INDEX_CHUNKS = 100
+BATCH_SIZE = 20
 
 
 def get_vectorstore_path(repo_name: str) -> str:

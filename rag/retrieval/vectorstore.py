@@ -8,8 +8,8 @@ from rag.retrieval.embeddings import get_embeddings
 
 
 VECTORSTORE_DIR = Path("vectorstore")
-MAX_INDEX_CHUNKS = 250
-BATCH_SIZE = 25
+MAX_INDEX_CHUNKS = 100
+BATCH_SIZE = 20
 
 
 def get_vectorstore_path(repo_name: str) -> str:

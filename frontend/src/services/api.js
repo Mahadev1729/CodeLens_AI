@@ -139,7 +139,7 @@ export const api = {
       body: JSON.stringify({ state }),
     }),
 
-  // Repository Operations (allow up to 120 seconds for Git cloning and analysis)
+  // Repository Operations (allow up to 300 seconds for Git cloning and embedding generation)
   cloneRepo: (repoUrl) =>
     request(
       '/repo/clone',
@@ -147,7 +147,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ repo_url: repoUrl }),
       },
-      120000
+      300000
     ),
 
   buildKb: (repoPath, repoName, groqApiKey) =>
@@ -161,7 +161,7 @@ export const api = {
           groq_api_key: groqApiKey,
         }),
       },
-      120000
+      300000
     ),
 
   getRepoStatus: (repoPath, repoName) => {
