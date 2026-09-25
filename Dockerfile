@@ -30,12 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     graphviz \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python requirements (pre-install lightweight CPU-only PyTorch and pre-download model weights)
+# Install Python requirements (pre-install lightweight CPU-only PyTorch)
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt && \
-    python -c "try:\n    from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')\nexcept Exception:\n    pass"
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
 COPY backend/ ./backend/
