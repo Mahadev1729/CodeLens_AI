@@ -7,9 +7,14 @@ from langchain_community.vectorstores import FAISS
 from rag.retrieval.embeddings import get_embeddings
 
 
-VECTORSTORE_DIR = Path("vectorstore")
-MAX_INDEX_CHUNKS = 100
-BATCH_SIZE = 20
+try:
+    from backend.config import PROJECT_DIR
+    VECTORSTORE_DIR = PROJECT_DIR / "vectorstore"
+except Exception:
+    VECTORSTORE_DIR = Path("vectorstore")
+
+MAX_INDEX_CHUNKS = 60
+BATCH_SIZE = 10
 
 
 def get_vectorstore_path(repo_name: str) -> str:
