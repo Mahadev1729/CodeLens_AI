@@ -24,7 +24,6 @@ from rag.llm.readme_generator import generate_readme
 import rag.ingestion as ingestion
 import rag.retrieval as retrieval
 import rag.llm as llm
-import rag.services as services
 
 __all__ = [
     "get_embeddings",
@@ -56,5 +55,4 @@ __all__ = [
     "ingestion",
     "retrieval",
     "llm",
-    "services",
 ]
