@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
-from rag.embeddings import get_embeddings
+from rag.services.embeddings import get_embeddings
 
 
 try:

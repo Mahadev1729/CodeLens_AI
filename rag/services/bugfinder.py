@@ -2,7 +2,7 @@ from pathlib import Path
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 from utils.helper import safe_read_file
-from rag.loader import iter_source_files
+from rag.services.loader import iter_source_files
 
 
 BUG_FINDER_PROMPT = """You are a senior security engineer and code quality expert. Analyze the following source files from a repository and identify bugs, security vulnerabilities, and code quality issues.

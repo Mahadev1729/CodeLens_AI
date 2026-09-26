@@ -2,7 +2,7 @@ from pathlib import Path
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 from utils.helper import build_folder_tree, safe_read_file
-from rag.loader import iter_source_files, get_repository_stats
+from rag.services.loader import iter_source_files, get_repository_stats
 
 
 README_PROMPT = """You are a technical writer and senior software engineer. Generate a comprehensive, production-grade README.md for this repository.

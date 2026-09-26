@@ -2,7 +2,7 @@ from pathlib import Path
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 from utils.helper import build_folder_tree, safe_read_file
-from rag.loader import iter_source_files
+from rag.services.loader import iter_source_files
 
 
 ARCHITECTURE_PROMPT = """You are a senior software architect. Analyze this codebase and generate a detailed Mermaid architecture diagram.

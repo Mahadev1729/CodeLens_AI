@@ -21,4 +21,3 @@ def get_embeddings() -> Any:
             model_kwargs={"device": "cpu"},
             encode_kwargs={"normalize_embeddings": True, "batch_size": 16},
         )
-
