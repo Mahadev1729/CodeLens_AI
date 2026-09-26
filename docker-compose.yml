@@ -1,0 +1,20 @@
+services:
+  codementor-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codementor-ai
+    ports:
+      - "8000:10000"
+    env_file:
+      - .env
+    environment:
+      - PORT=10000
+    volumes:
+      - ./user_data:/app/user_data
+      - ./vectorstore:/app/vectorstore
+      - ./repos:/app/repos
+      - ./users.db:/app/users.db
+      - ./app_database.db:/app/app_database.db
+      - ./chat_history.db:/app/chat_history.db
+    restart: unless-stopped
