@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
@@ -22,6 +22,78 @@ from rag import (
 from utils.helper import normalize_github_url, extract_repo_name, safe_read_file, get_language, get_file_size_str
 
 router = APIRouter(prefix="/api/repo", tags=["Repository"])
+
+# Global job tracker for knowledge base builds
+build_kb_jobs = {}
+
+
+def run_build_kb_task(repo_path: str, repo_name: str, username: str, current_user: Optional[str]):
+    try:
+        build_kb_jobs[repo_name] = {
+            "status": "indexing",
+            "progress": "Scanning and loading files...",
+            "message": f"Loading code files for '{repo_name}'...",
+            "total_chunks": 0,
+            "total_documents": 0,
+            "error": None,
+        }
+
+        documents, skipped = load_documents(repo_path)
+        if not documents:
+            build_kb_jobs[repo_name] = {
+                "status": "error",
+                "progress": "Failed",
+                "message": "No supported code or markdown files found in the repository.",
+                "error": "No supported files found",
+            }
+            return
+
+        build_kb_jobs[repo_name]["progress"] = f"Chunking {len(documents)} documents..."
+        build_kb_jobs[repo_name]["total_documents"] = len(documents)
+
+        chunks = chunk_documents(documents)
+        build_kb_jobs[repo_name]["progress"] = f"Building FAISS vector index ({len(chunks)} chunks)..."
+        build_kb_jobs[repo_name]["total_chunks"] = len(chunks)
+
+        build_vectorstore(chunks, repo_name)
+
+        session_state = get_user_session_state(username)
+        session_state.update({
+            "knowledge_base_built": True,
+            "repo_path": repo_path,
+            "repo_name": repo_name,
+        })
+        save_user_session_state(username, session_state)
+
+        if current_user:
+            try:
+                log_activity_db(
+                    username=current_user,
+                    activity_type="build_kb",
+                    title=f"Built Knowledge Base for '{repo_name}'",
+                    details=f"Indexed {len(chunks)} chunks from {len(documents)} files",
+                    repo_name=repo_name,
+                    metadata={"chunks": len(chunks), "files": len(documents), "skipped": len(skipped)},
+                )
+            except Exception as e:
+                print(f"[Repo] Warning: Failed to log activity: {e}")
+
+        build_kb_jobs[repo_name] = {
+            "status": "completed",
+            "progress": "Ready",
+            "message": f"Knowledge base built! {len(chunks)} chunks indexed.",
+            "total_documents": len(documents),
+            "total_chunks": len(chunks),
+            "skipped_files": skipped,
+            "error": None,
+        }
+    except Exception as e:
+        build_kb_jobs[repo_name] = {
+            "status": "error",
+            "progress": "Failed",
+            "message": f"Failed to build knowledge base: {str(e)}",
+            "error": str(e),
+        }
 
 
 class CloneRequest(BaseModel):
@@ -112,7 +184,11 @@ async def clone_repo_endpoint(req: CloneRequest, current_user: Optional[str] = D
 
 
 @router.post("/build-kb")
-async def build_kb_endpoint(req: BuildKbRequest, current_user: Optional[str] = Depends(get_optional_user)):
+async def build_kb_endpoint(
+    req: BuildKbRequest, 
+    background_tasks: BackgroundTasks, 
+    current_user: Optional[str] = Depends(get_optional_user)
+):
     username = current_user or "guest"
     session_state = get_user_session_state(username)
 
@@ -128,52 +204,42 @@ async def build_kb_endpoint(req: BuildKbRequest, current_user: Optional[str] = D
     if not repo_name:
         repo_name = Path(repo_path).name
 
-    try:
-        documents, skipped = await run_in_threadpool(load_documents, repo_path)
-        if not documents:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No supported code or markdown files found in the repository.",
-            )
-
-        chunks = await run_in_threadpool(chunk_documents, documents)
-        await run_in_threadpool(build_vectorstore, chunks, repo_name)
-
-        session_state.update({
-            "knowledge_base_built": True,
-            "repo_path": repo_path,
-            "repo_name": repo_name,
-        })
-        save_user_session_state(username, session_state)
-
-        if current_user:
-            log_activity_db(
-                username=current_user,
-                activity_type="build_kb",
-                title=f"Built Knowledge Base for '{repo_name}'",
-                details=f"Indexed {len(chunks)} chunks from {len(documents)} files",
-                repo_name=repo_name,
-                metadata={"chunks": len(chunks), "files": len(documents), "skipped": len(skipped)},
-            )
-
+    # Check if a build task is already currently running
+    current_job = build_kb_jobs.get(repo_name)
+    if current_job and current_job.get("status") == "indexing":
         return {
             "success": True,
-            "message": f"Knowledge base built! {len(chunks)} chunks indexed.",
-            "total_documents": len(documents),
-            "total_chunks": len(chunks),
-            "skipped_files": skipped,
+            "status": "indexing",
+            "message": f"Knowledge base indexing for '{repo_name}' is already in progress.",
+            "repo_name": repo_name,
         }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to build knowledge base: {str(e)}",
-        )
+
+    # Queue background task
+    build_kb_jobs[repo_name] = {
+        "status": "indexing",
+        "progress": "Queued",
+        "message": f"Starting knowledge base build for '{repo_name}'...",
+        "total_chunks": 0,
+        "total_documents": 0,
+        "error": None,
+    }
+
+    background_tasks.add_task(run_build_kb_task, repo_path, repo_name, username, current_user)
+
+    return {
+        "success": True,
+        "status": "indexing",
+        "message": f"Knowledge base build started in background for '{repo_name}'.",
+        "repo_name": repo_name,
+    }
 
 
 @router.get("/status")
-async def get_status_endpoint(repo_path: Optional[str] = None, repo_name: Optional[str] = None, current_user: Optional[str] = Depends(get_optional_user)):
+async def get_status_endpoint(
+    repo_path: Optional[str] = None, 
+    repo_name: Optional[str] = None, 
+    current_user: Optional[str] = Depends(get_optional_user)
+):
     username = current_user or "guest"
     session_state = get_user_session_state(username)
 
@@ -186,6 +252,7 @@ async def get_status_endpoint(repo_path: Optional[str] = None, repo_name: Option
             "repo_path": None,
             "repo_name": None,
             "knowledge_base_built": False,
+            "kb_status": "idle",
             "repo_info": None,
             "repo_stats": None,
         }
@@ -196,12 +263,23 @@ async def get_status_endpoint(repo_path: Optional[str] = None, repo_name: Option
     repo_info = get_repo_info(target_path)
     kb_exists = vectorstore_exists(target_name)
     stats = get_repository_stats(target_path)
+    job = build_kb_jobs.get(target_name, {})
+
+    kb_status = job.get("status")
+    if not kb_status:
+        kb_status = "completed" if kb_exists else "idle"
 
     return {
         "loaded": True,
         "repo_path": target_path,
         "repo_name": target_name,
         "knowledge_base_built": kb_exists,
+        "kb_status": kb_status,
+        "kb_progress": job.get("progress", "Ready" if kb_exists else "Not built"),
+        "kb_message": job.get("message", ""),
+        "kb_error": job.get("error"),
+        "total_chunks": job.get("total_chunks", 0),
+        "total_documents": job.get("total_documents", 0),
         "repo_info": repo_info,
         "repo_stats": stats,
     }

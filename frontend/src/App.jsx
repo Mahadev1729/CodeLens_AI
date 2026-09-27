@@ -159,13 +159,43 @@ export default function App() {
     setIsBuildingKb(true);
     try {
       const res = await api.buildKb(activeRepo.path, activeRepo.name, groqApiKey);
-      setActiveRepo((prev) => ({ ...prev, knowledgeBaseBuilt: true }));
-      await refreshLocalRepos();
-      showNotification('success', `Knowledge base built! ${res.total_chunks} code chunks indexed.`);
+      showNotification('info', res.message || 'Building knowledge base in background...');
+
+      // Poll status every 2.5s until build is completed or encounters an error
+      const pollStartTime = Date.now();
+      const MAX_POLL_MS = 600000; // 10-minute upper limit for very large repos
+
+      const pollTimer = setInterval(async () => {
+        try {
+          if (Date.now() - pollStartTime > MAX_POLL_MS) {
+            clearInterval(pollTimer);
+            setIsBuildingKb(false);
+            showNotification('error', 'Knowledge base build timed out. Please try again.');
+            return;
+          }
+
+          const statusRes = await api.getRepoStatus(activeRepo.path, activeRepo.name);
+
+          if (statusRes.knowledge_base_built || statusRes.kb_status === 'completed') {
+            clearInterval(pollTimer);
+            setIsBuildingKb(false);
+            setActiveRepo((prev) => ({ ...prev, knowledgeBaseBuilt: true }));
+            await refreshLocalRepos();
+            const chunkInfo = statusRes.total_chunks ? ` (${statusRes.total_chunks} chunks indexed)` : '';
+            showNotification('success', `Knowledge base built successfully!${chunkInfo}`);
+          } else if (statusRes.kb_status === 'error') {
+            clearInterval(pollTimer);
+            setIsBuildingKb(false);
+            showNotification('error', statusRes.kb_message || statusRes.kb_error || 'Failed to build knowledge base.');
+          }
+        } catch (pollErr) {
+          console.warn('[Status Poll] Check failed:', pollErr);
+        }
+      }, 2500);
+
     } catch (err) {
-      showNotification('error', err.message || 'Failed to build knowledge base.');
-    } finally {
       setIsBuildingKb(false);
+      showNotification('error', err.message || 'Failed to start knowledge base build.');
     }
   };
 

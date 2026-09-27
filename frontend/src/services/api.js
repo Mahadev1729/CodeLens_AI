@@ -161,7 +161,7 @@ export const api = {
           groq_api_key: groqApiKey,
         }),
       },
-      300000
+      60000
     ),
 
   getRepoStatus: (repoPath, repoName) => {
