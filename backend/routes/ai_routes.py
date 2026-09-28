@@ -27,8 +27,25 @@ from rag import (
     vectorstore_exists,
 )
 from utils.helper import truncate_text
+from backend.redis_client import (
+    cache_get,
+    cache_set,
+    make_cache_key,
+    is_redis_available,
+    cache_delete,
+)
 
 router = APIRouter(prefix="/api/ai", tags=["AI Intelligence"])
+
+
+@router.get("/redis-status")
+async def redis_status_endpoint():
+    """Diagnostic endpoint to verify Redis connection."""
+    available = is_redis_available()
+    return {
+        "redis_connected": available,
+        "mode": "Upstash / Cloud Redis" if available else "In-Memory / Database (Fallback)",
+    }
 
 
 def _resolve_api_key(req_key: Optional[str], username: Optional[str] = None) -> str:
@@ -176,16 +193,25 @@ async def summary_endpoint(req: SummaryRequest, current_user: Optional[str] = De
             detail="Valid repository path is required.",
         )
 
-    if not req.regenerate and session_state.get("summary_cache"):
-        return {"summary": session_state["summary_cache"], "cached": True}
+    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
+    redis_key = make_cache_key("summary", repo_name or Path(repo_path).name, model)
+
+    if not req.regenerate:
+        # Check Redis first
+        cached_summary = cache_get(redis_key)
+        if cached_summary:
+            return {"summary": cached_summary, "cached": True}
+        if session_state.get("summary_cache"):
+            return {"summary": session_state["summary_cache"], "cached": True}
 
     api_key = _resolve_api_key(req.api_key, username)
-    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
 
     try:
         summary = generate_summary(repo_path, api_key, model)
         session_state["summary_cache"] = summary
         save_user_session_state(username, session_state)
+        # Store in Redis (TTL: 3 days)
+        cache_set(redis_key, summary, ttl_seconds=259200)
 
         if current_user:
             log_activity_db(
@@ -218,29 +244,52 @@ async def bugs_endpoint(req: BugAnalysisRequest, current_user: Optional[str] = D
             detail="Valid repository path is required.",
         )
 
-    if not req.regenerate and session_state.get("bug_cache"):
-        raw = session_state["bug_cache"]
-        issues = parse_bugs(raw)
-        return {
-            "raw_report": raw,
-            "issues": issues,
-            "counts": {
-                "total": len(issues),
-                "high": len([i for i in issues if i.get("severity", "").lower() == "high"]),
-                "medium": len([i for i in issues if i.get("severity", "").lower() == "medium"]),
-                "low": len([i for i in issues if i.get("severity", "").lower() == "low"]),
-            },
-            "cached": True,
-        }
+    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
+    redis_key = make_cache_key("bugs", repo_name or Path(repo_path).name, model)
+
+    if not req.regenerate:
+        # Check Redis first
+        cached_bugs = cache_get(redis_key)
+        if cached_bugs and isinstance(cached_bugs, dict) and "raw_report" in cached_bugs:
+            return {**cached_bugs, "cached": True}
+
+        if session_state.get("bug_cache"):
+            raw = session_state["bug_cache"]
+            issues = parse_bugs(raw)
+            return {
+                "raw_report": raw,
+                "issues": issues,
+                "counts": {
+                    "total": len(issues),
+                    "high": len([i for i in issues if i.get("severity", "").lower() == "high"]),
+                    "medium": len([i for i in issues if i.get("severity", "").lower() == "medium"]),
+                    "low": len([i for i in issues if i.get("severity", "").lower() == "low"]),
+                },
+                "cached": True,
+            }
 
     api_key = _resolve_api_key(req.api_key, username)
-    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
 
     try:
         raw_report = find_bugs(repo_path, api_key, model)
         issues = parse_bugs(raw_report)
+        counts = {
+            "total": len(issues),
+            "high": len([i for i in issues if i.get("severity", "").lower() == "high"]),
+            "medium": len([i for i in issues if i.get("severity", "").lower() == "medium"]),
+            "low": len([i for i in issues if i.get("severity", "").lower() == "low"]),
+        }
+
         session_state["bug_cache"] = raw_report
         save_user_session_state(username, session_state)
+
+        # Store in Redis (TTL: 3 days)
+        payload = {
+            "raw_report": raw_report,
+            "issues": issues,
+            "counts": counts,
+        }
+        cache_set(redis_key, payload, ttl_seconds=259200)
 
         if current_user:
             log_activity_db(
@@ -252,17 +301,7 @@ async def bugs_endpoint(req: BugAnalysisRequest, current_user: Optional[str] = D
                 metadata={"total_issues": len(issues)},
             )
 
-        return {
-            "raw_report": raw_report,
-            "issues": issues,
-            "counts": {
-                "total": len(issues),
-                "high": len([i for i in issues if i.get("severity", "").lower() == "high"]),
-                "medium": len([i for i in issues if i.get("severity", "").lower() == "medium"]),
-                "low": len([i for i in issues if i.get("severity", "").lower() == "low"]),
-            },
-            "cached": False,
-        }
+        return {**payload, "cached": False}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -285,14 +324,21 @@ async def architecture_endpoint(req: ArchitectureRequest, current_user: Optional
         )
 
     diag_format = (req.format or "python").lower().strip()
+    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
     cache_key = f"architecture_cache_{diag_format}"
+    redis_key = make_cache_key("arch", repo_name or Path(repo_path).name, diag_format, model)
 
-    if not req.regenerate and session_state.get(cache_key):
-        cached_data = session_state[cache_key]
-        return {**cached_data, "cached": True}
+    if not req.regenerate:
+        # Check Redis first
+        cached_arch = cache_get(redis_key)
+        if cached_arch and isinstance(cached_arch, dict):
+            return {**cached_arch, "cached": True}
+
+        if session_state.get(cache_key):
+            cached_data = session_state[cache_key]
+            return {**cached_data, "cached": True}
 
     api_key = _resolve_api_key(req.api_key, username)
-    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
 
     try:
         arch_text = generate_architecture(repo_path, api_key, model, diagram_type=diag_format)
@@ -321,6 +367,8 @@ async def architecture_endpoint(req: ArchitectureRequest, current_user: Optional
 
         session_state[cache_key] = resp_payload
         save_user_session_state(username, session_state)
+        # Store in Redis (TTL: 3 days)
+        cache_set(redis_key, resp_payload, ttl_seconds=259200)
 
         if current_user:
             log_activity_db(
@@ -352,16 +400,26 @@ async def readme_endpoint(req: ReadmeRequest, current_user: Optional[str] = Depe
             detail="Valid repository path is required.",
         )
 
-    if not req.regenerate and session_state.get("readme_cache"):
-        return {"readme": session_state["readme_cache"], "cached": True}
+    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
+    redis_key = make_cache_key("readme", repo_name or Path(repo_path).name, model)
+
+    if not req.regenerate:
+        # Check Redis first
+        cached_readme = cache_get(redis_key)
+        if cached_readme:
+            return {"readme": cached_readme, "cached": True}
+
+        if session_state.get("readme_cache"):
+            return {"readme": session_state["readme_cache"], "cached": True}
 
     api_key = _resolve_api_key(req.api_key, username)
-    model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
 
     try:
         readme = generate_readme(repo_path, api_key, model)
         session_state["readme_cache"] = readme
         save_user_session_state(username, session_state)
+        # Store in Redis (TTL: 3 days)
+        cache_set(redis_key, readme, ttl_seconds=259200)
 
         if current_user:
             log_activity_db(
@@ -386,9 +444,17 @@ async def explain_file_endpoint(req: ExplainFileRequest, current_user: Optional[
 
     api_key = _resolve_api_key(req.api_key, username)
     model = req.model or session_state.get("selected_model") or DEFAULT_MODEL
+    redis_key = make_cache_key("explain", req.file_path, model, req.file_content[:300])
+
+    # Check Redis cache first
+    cached_exp = cache_get(redis_key)
+    if cached_exp:
+        return {"explanation": cached_exp, "file_path": req.file_path, "cached": True}
 
     try:
         explanation = explain_file(req.file_path, req.file_content, api_key, model)
+        # Store in Redis (TTL: 7 days)
+        cache_set(redis_key, explanation, ttl_seconds=604800)
 
         if current_user:
             log_activity_db(
@@ -400,7 +466,7 @@ async def explain_file_endpoint(req: ExplainFileRequest, current_user: Optional[
                 metadata={"file": req.file_path},
             )
 
-        return {"explanation": explanation, "file_path": req.file_path}
+        return {"explanation": explanation, "file_path": req.file_path, "cached": False}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

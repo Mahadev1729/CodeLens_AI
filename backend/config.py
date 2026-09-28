@@ -54,6 +54,10 @@ if DATABASE_URL:
 DEFAULT_GROQ_API_KEY = _get_env("GROQ_API_KEY", "")
 DEFAULT_MODEL = _get_env("DEFAULT_MODEL", "openai/gpt-oss-120b")
 
+# Redis Configuration (Upstash / Cloud / Local)
+REDIS_URL = _get_env("REDIS_URL", _get_env("UPSTASH_REDIS_URL", ""))
+REDIS_ENABLED = bool(REDIS_URL)
+
 # Security & Auth Settings
 JWT_SECRET_KEY = _get_env("JWT_SECRET_KEY", "codementorai_super_secure_jwt_secret_key_2026_!@#$%")
 JWT_ALGORITHM = "HS256"
