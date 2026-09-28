@@ -7,7 +7,14 @@ from rag.retrieval.vectorstore import (
     vectorstore_exists,
     get_vectorstore_path,
 )
-from rag.llm.rag import ask_question, explain_file, retrieve_context, get_llm
+from rag.llm.llm_client import (
+    get_llm,
+    invoke_with_fallback,
+    FALLBACK_MODELS,
+    DEFAULT_GROQ_MODEL,
+    get_fallback_model_list,
+)
+from rag.llm.rag import ask_question, explain_file, retrieve_context
 from rag.ingestion.loader import load_documents, get_repository_stats, iter_source_files
 from rag.ingestion.chunker import chunk_documents, get_text_splitter
 from rag.ingestion.clone_repo import clone_repository, get_repo_info, is_valid_repo_path, get_repo_local_path
@@ -35,6 +42,10 @@ __all__ = [
     "explain_file",
     "retrieve_context",
     "get_llm",
+    "invoke_with_fallback",
+    "FALLBACK_MODELS",
+    "DEFAULT_GROQ_MODEL",
+    "get_fallback_model_list",
     "load_documents",
     "get_repository_stats",
     "iter_source_files",

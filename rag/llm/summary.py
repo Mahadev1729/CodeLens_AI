@@ -1,8 +1,7 @@
 from pathlib import Path
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from utils.helper import build_folder_tree, safe_read_file
 from rag.ingestion.loader import iter_source_files
+from rag.llm.llm_client import invoke_with_fallback, DEFAULT_GROQ_MODEL
 
 
 SUMMARY_PROMPT = """You are a senior software architect. Analyze this codebase and provide a comprehensive project summary.
@@ -51,7 +50,7 @@ Generate a detailed summary with these exact sections:
 def generate_summary(
     repo_path: str,
     api_key: str,
-    model: str = "llama-3.1-8b-instant",
+    model: str = DEFAULT_GROQ_MODEL,
 ) -> str:
     repo_name = Path(repo_path).name
     folder_tree = build_folder_tree(repo_path, max_depth=4)
@@ -79,7 +78,10 @@ def generate_summary(
         sample_files=sample_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model,
-                   temperature=0.1, max_tokens=4096)
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return invoke_with_fallback(
+        api_key=api_key,
+        prompt_or_messages=prompt,
+        model=model,
+        temperature=0.1,
+        max_tokens=4096,
+    )

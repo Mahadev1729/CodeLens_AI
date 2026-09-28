@@ -38,19 +38,7 @@ Recent Chat History:
 Answer:"""
 
 
-DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
-
-
-def get_llm(api_key: str, model: str = DEFAULT_GROQ_MODEL) -> ChatGroq:
-    safe_model = model if model in {
-        "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant",
-        "gemma2-9b-it", "mixtral-8x7b-32768"} else DEFAULT_GROQ_MODEL
-    return ChatGroq(
-        api_key=api_key,
-        model=safe_model,
-        temperature=0.2,
-        max_tokens=4096,
-    )
+from rag.llm.llm_client import get_llm, invoke_with_fallback, DEFAULT_GROQ_MODEL
 
 
 def retrieve_context(vectorstore: FAISS, query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
@@ -108,7 +96,6 @@ def explain_file(
     api_key: str,
     model: str = DEFAULT_GROQ_MODEL,
 ) -> str:
-    llm = get_llm(api_key, model)
     language = file_path.split(".")[-1] if "." in file_path else "text"
     truncated = file_content[:6000] if len(
         file_content) > 6000 else file_content
@@ -128,5 +115,10 @@ Provide:
 4. **Role in Project**: How it fits into the overall architecture
 5. **Notable Patterns**: Design patterns or interesting implementation details"""
 
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return invoke_with_fallback(
+        api_key=api_key,
+        prompt_or_messages=prompt,
+        model=model,
+        temperature=0.2,
+        max_tokens=4096,
+    )

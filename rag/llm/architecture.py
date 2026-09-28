@@ -6,10 +6,9 @@ import tempfile
 import subprocess
 from pathlib import Path
 from typing import Tuple, Dict, Any, Optional
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from utils.helper import build_folder_tree, safe_read_file
 from rag.ingestion.loader import iter_source_files
+from rag.llm.llm_client import invoke_with_fallback, DEFAULT_GROQ_MODEL
 
 
 MERMAID_ARCHITECTURE_PROMPT = """You are a senior software architect. Analyze this codebase and generate a detailed Mermaid architecture diagram.
@@ -119,7 +118,7 @@ def _prepare_code_context(repo_path: str, max_chars: int = 12000) -> Tuple[str, 
 def generate_architecture(
     repo_path: str,
     api_key: str,
-    model: str = "llama-3.1-8b-instant",
+    model: str = DEFAULT_GROQ_MODEL,
     diagram_type: str = "python",  # "python" or "mermaid"
 ) -> str:
     repo_name, folder_tree, key_files = _prepare_code_context(repo_path)
@@ -135,9 +134,13 @@ def generate_architecture(
         key_files=key_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model, temperature=0.1, max_tokens=4096)
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return invoke_with_fallback(
+        api_key=api_key,
+        prompt_or_messages=prompt,
+        model=model,
+        temperature=0.1,
+        max_tokens=4096,
+    )
 
 
 def extract_mermaid_diagram(text: str) -> Tuple[str, str]:

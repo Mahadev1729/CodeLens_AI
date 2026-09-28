@@ -1,8 +1,6 @@
-from pathlib import Path
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from utils.helper import build_folder_tree, safe_read_file
 from rag.ingestion.loader import iter_source_files, get_repository_stats
+from rag.llm.llm_client import invoke_with_fallback, DEFAULT_GROQ_MODEL
 
 
 README_PROMPT = """You are a technical writer and senior software engineer. Generate a comprehensive, production-grade README.md for this repository.
@@ -67,10 +65,13 @@ Generate a complete, professional README.md with the following structure:
 Output ONLY valid Markdown."""
 
 
+from pathlib import Path
+
+
 def generate_readme(
     repo_path: str,
     api_key: str,
-    model: str = "llama-3.1-8b-instant",
+    model: str = DEFAULT_GROQ_MODEL,
 ) -> str:
     repo_name = Path(repo_path).name
     folder_tree = build_folder_tree(repo_path, max_depth=3)
@@ -114,7 +115,10 @@ def generate_readme(
         key_files=key_files,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model,
-                   temperature=0.2, max_tokens=4096)
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return invoke_with_fallback(
+        api_key=api_key,
+        prompt_or_messages=prompt,
+        model=model,
+        temperature=0.2,
+        max_tokens=4096,
+    )

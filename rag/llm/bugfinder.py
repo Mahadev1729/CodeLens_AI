@@ -1,8 +1,7 @@
 from pathlib import Path
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from utils.helper import safe_read_file
 from rag.ingestion.loader import iter_source_files
+from rag.llm.llm_client import invoke_with_fallback, DEFAULT_GROQ_MODEL
 
 
 BUG_FINDER_PROMPT = """You are a senior security engineer and code quality expert. Analyze the following source files from a repository and identify bugs, security vulnerabilities, and code quality issues.
@@ -51,7 +50,7 @@ After listing all issues, provide:
 def find_bugs(
     repo_path: str,
     api_key: str,
-    model: str = "llama-3.1-8b-instant",
+    model: str = DEFAULT_GROQ_MODEL,
 ) -> str:
     repo_name = Path(repo_path).name
     file_contents_parts = []
@@ -80,10 +79,13 @@ def find_bugs(
         file_contents=file_contents,
     )
 
-    llm = ChatGroq(api_key=api_key, model=model,
-                   temperature=0.0, max_tokens=4096)
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return invoke_with_fallback(
+        api_key=api_key,
+        prompt_or_messages=prompt,
+        model=model,
+        temperature=0.0,
+        max_tokens=4096,
+    )
 
 
 def parse_bugs(bug_report: str) -> list[dict]:
