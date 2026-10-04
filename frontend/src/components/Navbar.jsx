@@ -7,12 +7,10 @@ import {
   LogOut, 
   CheckCircle2, 
   AlertCircle, 
-  Settings,
-  Cpu,
-  Menu,
-  X,
-  SlidersHorizontal,
-  ChevronDown
+  Cpu, 
+  Menu, 
+  X, 
+  SlidersHorizontal 
 } from 'lucide-react';
 
 export default function Navbar({
@@ -51,39 +49,38 @@ export default function Navbar({
               title="Toggle Repository Sidebar"
               aria-label="Toggle Sidebar"
             >
-              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           )}
 
           <div className="nav-brand">
-            <Brain size={26} style={{ color: '#58a6ff', flexShrink: 0 }} />
-            <span className="brand-text">CodeMentorAI</span>
-            <span className="brand-badge">FastAPI + React</span>
+            <Brain size={22} style={{ color: '#ffffff', flexShrink: 0 }} />
+            <span className="brand-text">CodeMentor</span>
           </div>
         </div>
 
-        {/* Center: Active Repo Badge */}
+        {/* Center: Active Repo Indicator */}
         <div className="nav-center">
           {activeRepo ? (
             <div className="active-repo-badge" title={`Active: ${activeRepo.name} (${activeRepo.info?.branch || 'main'})`}>
-              <GitBranch size={15} style={{ color: '#3fb950', flexShrink: 0 }} />
+              <GitBranch size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
               <strong className="repo-badge-name">{activeRepo.name}</strong>
-              <span className="repo-badge-branch" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+              <span className="repo-badge-branch" style={{ fontSize: '0.75rem' }}>
                 ({activeRepo.info?.branch || 'main'})
               </span>
               {activeRepo.knowledgeBaseBuilt ? (
-                <span className="status-badge status-ready" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>
-                  ⚡ KB
+                <span className="status-badge status-ready" style={{ padding: '2px 6px', fontSize: '0.68rem' }}>
+                  Indexed
                 </span>
               ) : (
-                <span className="status-badge status-pending" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>
-                  ○ No KB
+                <span className="status-badge status-pending" style={{ padding: '2px 6px', fontSize: '0.68rem' }}>
+                  Not Indexed
                 </span>
               )}
             </div>
           ) : (
             <div className="active-repo-badge" style={{ color: 'var(--text-muted)' }}>
-              <span className="repo-badge-empty">No Repo Selected</span>
+              <span>No Repository Selected</span>
             </div>
           )}
         </div>
@@ -92,31 +89,32 @@ export default function Navbar({
         <div className="nav-right desktop-nav-controls">
           {/* Model Selector */}
           <div className="model-selector-wrapper">
-            <Cpu size={15} style={{ color: 'var(--text-secondary)' }} />
+            <Cpu size={14} style={{ color: 'var(--text-muted)' }} />
             <select
               value={selectedModel}
               onChange={(e) => onModelChange(e.target.value)}
               className="select-field nav-model-select"
             >
-              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
-              <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
-              <option value="gemma2-9b-it">Gemma 2 9B (Google)</option>
-              <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k)</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+              <option value="gemma2-9b-it">Gemma 2 9B</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
             </select>
           </div>
 
           {/* API Key Button */}
           <button
             onClick={() => setShowKeyModal(true)}
-            className="btn btn-outline nav-key-btn"
-            title="Configure Groq API Key"
+            className="btn btn-outline"
+            style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+            title="Configure API Key"
           >
-            <Key size={14} />
-            <span className="btn-text">API Key</span>
+            <Key size={13} />
+            <span>API Key</span>
             {isKeyValid ? (
-              <CheckCircle2 size={14} style={{ color: 'var(--accent-green)' }} />
+              <CheckCircle2 size={13} style={{ color: '#ffffff' }} />
             ) : (
-              <AlertCircle size={14} style={{ color: 'var(--accent-orange)' }} />
+              <AlertCircle size={13} style={{ color: 'var(--text-muted)' }} />
             )}
           </button>
 
@@ -124,20 +122,21 @@ export default function Navbar({
           {user ? (
             <div className="nav-user-container">
               <div className="nav-user-pill" title={`Logged in as ${user}`}>
-                <User size={14} style={{ color: 'var(--accent-purple)' }} />
+                <User size={13} style={{ color: 'var(--text-secondary)' }} />
                 <span className="nav-user-name">{user}</span>
               </div>
               <button
                 onClick={onLogout}
-                className="btn btn-outline nav-logout-btn"
+                className="btn btn-outline"
+                style={{ padding: '6px 8px' }}
                 title="Log Out"
               >
-                <LogOut size={14} />
+                <LogOut size={13} />
               </button>
             </div>
           ) : (
-            <button onClick={onOpenAuth} className="btn btn-primary nav-signin-btn">
-              <User size={15} />
+            <button onClick={onOpenAuth} className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
+              <User size={13} />
               <span>Sign In</span>
             </button>
           )}
@@ -151,7 +150,7 @@ export default function Navbar({
             title="Open Menu"
             aria-label="Open Navigation Menu"
           >
-            <SlidersHorizontal size={18} />
+            <SlidersHorizontal size={16} />
           </button>
         </div>
       </header>
@@ -161,21 +160,19 @@ export default function Navbar({
         <div className="mobile-nav-dropdown">
           <div className="mobile-nav-row">
             <label className="mobile-nav-label">
-              <Cpu size={14} />
-              <span>LLM Model</span>
+              <Cpu size={13} />
+              <span>Model</span>
             </label>
             <select
               value={selectedModel}
-              onChange={(e) => {
-                onModelChange(e.target.value);
-              }}
+              onChange={(e) => onModelChange(e.target.value)}
               className="select-field"
-              style={{ width: '100%', fontSize: '0.85rem' }}
+              style={{ width: '100%', fontSize: '0.82rem' }}
             >
-              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Groq)</option>
-              <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
-              <option value="gemma2-9b-it">Gemma 2 9B (Google)</option>
-              <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k)</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+              <option value="gemma2-9b-it">Gemma 2 9B</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
             </select>
           </div>
 
@@ -186,15 +183,11 @@ export default function Navbar({
                 setShowKeyModal(true);
               }}
               className="btn btn-outline"
-              style={{ flex: 1, justifyContent: 'center' }}
+              style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }}
             >
-              <Key size={14} />
+              <Key size={13} />
               <span>API Key</span>
-              {isKeyValid ? (
-                <CheckCircle2 size={14} style={{ color: 'var(--accent-green)' }} />
-              ) : (
-                <AlertCircle size={14} style={{ color: 'var(--accent-orange)' }} />
-              )}
+              {isKeyValid && <CheckCircle2 size={13} style={{ color: '#ffffff' }} />}
             </button>
 
             {user ? (
@@ -203,7 +196,7 @@ export default function Navbar({
                   className="nav-user-pill"
                   style={{ flex: 1, justifyContent: 'center' }}
                 >
-                  <User size={14} style={{ color: 'var(--accent-purple)' }} />
+                  <User size={13} style={{ color: 'var(--text-secondary)' }} />
                   <span className="nav-user-name">{user}</span>
                 </div>
                 <button
@@ -214,7 +207,7 @@ export default function Navbar({
                   className="btn btn-outline"
                   title="Log Out"
                 >
-                  <LogOut size={14} />
+                  <LogOut size={13} />
                 </button>
               </div>
             ) : (
@@ -224,9 +217,9 @@ export default function Navbar({
                   onOpenAuth();
                 }}
                 className="btn btn-primary"
-                style={{ flex: 1, justifyContent: 'center' }}
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }}
               >
-                <User size={14} />
+                <User size={13} />
                 <span>Sign In</span>
               </button>
             )}
@@ -238,24 +231,16 @@ export default function Navbar({
       {showKeyModal && (
         <div className="modal-overlay" onClick={() => setShowKeyModal(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Key size={22} style={{ color: 'var(--accent-blue)' }} />
-              <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>Groq API Configuration</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <Key size={20} style={{ color: '#ffffff' }} />
+              <h3 style={{ fontSize: '1.15rem', color: '#fff', fontWeight: 600 }}>API Configuration</h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              Enter your Groq API key (starts with <code>gsk_...</code>). Free keys can be created at{' '}
-              <a
-                href="https://console.groq.com"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: 'var(--accent-blue)' }}
-              >
-                console.groq.com
-              </a>.
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+              Enter your Groq API key to power code analysis and assistant queries.
             </p>
-            <form onSubmit={handleSaveKey} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleSaveKey} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
-                <label className="input-label">Groq API Key</label>
+                <label className="input-label">API Key</label>
                 <input
                   type="password"
                   value={tempKey}
@@ -274,7 +259,7 @@ export default function Navbar({
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Save Key
+                  Save
                 </button>
               </div>
             </form>
@@ -284,4 +269,3 @@ export default function Navbar({
     </>
   );
 }
-

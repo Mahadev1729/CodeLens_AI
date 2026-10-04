@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FileEdit, 
   RefreshCw, 
   Download, 
   Eye, 
   Code2, 
-  Loader2, 
-  Sparkles 
+  Loader2 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '../../services/api';
@@ -68,38 +66,38 @@ export default function ReadmeTab({
   if (!activeRepo) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">📝</div>
         <h3 className="empty-title">No Repository Loaded</h3>
         <p className="empty-desc">
-          Clone or select a repository from the sidebar to automatically generate a professional README.md document.
+          Select or clone a repository from the sidebar to generate documentation.
         </p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>📝 README.md Documentation Generator</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Auto-generate comprehensive markdown documentation with installation, architecture, and usage guides
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>Documentation</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            README generator for {activeRepo.name}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           {readme && (
             <>
-              <button onClick={handleDownload} className="btn btn-outline" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-                <Download size={14} />
-                <span>Download README.md</span>
+              <button onClick={handleDownload} className="btn btn-outline" style={{ padding: '5px 12px', fontSize: '0.8rem' }}>
+                <Download size={13} />
+                <span>Download</span>
               </button>
               <button
                 onClick={() => handleGenerate(true)}
                 disabled={loading}
                 className="btn btn-secondary"
+                style={{ padding: '5px 12px', fontSize: '0.8rem' }}
               >
-                <RefreshCw size={15} className={loading ? 'spin-animate' : ''} />
+                <RefreshCw size={13} className={loading ? 'spin-animate' : ''} />
                 <span>Regenerate</span>
               </button>
             </>
@@ -108,68 +106,63 @@ export default function ReadmeTab({
       </div>
 
       {error && (
-        <div className="card" style={{ background: 'rgba(248,81,73,0.1)', borderColor: 'rgba(248,81,73,0.3)', color: 'var(--accent-red)' }}>
+        <div className="card" style={{ background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.3)', color: '#fca5a5', fontSize: '0.85rem' }}>
           {error}
         </div>
       )}
 
       {/* Initial Trigger */}
       {!readme && !loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <FileEdit size={36} style={{ color: 'var(--accent-purple)', marginBottom: '14px' }} />
-          <h3 style={{ fontSize: '1.15rem', marginBottom: '8px', color: '#fff' }}>Generate README for {activeRepo.name}</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 20px' }}>
-            Builds a comprehensive, developer-ready README including badges, project structure, quick start, API reference, and tech stack.
+        <div className="card" style={{ textAlign: 'center', padding: '36px 20px' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', color: '#fff' }}>Generate README</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 16px' }}>
+            Creates documentation including overview, setup, and usage guidelines.
           </p>
-          <button onClick={() => handleGenerate(false)} className="btn btn-primary" style={{ padding: '10px 24px' }}>
-            <Sparkles size={16} />
+          <button onClick={() => handleGenerate(false)} className="btn btn-primary" style={{ padding: '8px 20px' }}>
             <span>Generate README</span>
           </button>
         </div>
       )}
 
       {loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <Loader2 size={36} className="spin-animate" style={{ color: 'var(--accent-blue)', margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.1rem', color: '#fff' }}>Drafting README documentation...</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Synthesizing features, setup scripts, architecture layout, and dependencies.
-          </p>
+        <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
+          <Loader2 size={28} className="spin-animate" style={{ color: '#ffffff', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '0.98rem', color: '#fff' }}>Drafting documentation...</h3>
         </div>
       )}
 
       {readme && !loading && (
         <>
           {/* View mode toggle */}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={() => setViewMode('preview')}
               className={`btn ${viewMode === 'preview' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+              style={{ padding: '5px 12px', fontSize: '0.8rem' }}
             >
-              <Eye size={14} />
+              <Eye size={13} />
               <span>Preview</span>
             </button>
             <button
               onClick={() => setViewMode('raw')}
               className={`btn ${viewMode === 'raw' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+              style={{ padding: '5px 12px', fontSize: '0.8rem' }}
             >
-              <Code2 size={14} />
-              <span>Raw Markdown</span>
+              <Code2 size={13} />
+              <span>Markdown</span>
             </button>
           </div>
 
           {viewMode === 'preview' ? (
-            <div className="card markdown-body" style={{ padding: '28px', background: 'var(--bg-secondary)' }}>
+            <div className="card markdown-body" style={{ padding: '24px' }}>
               <ReactMarkdown>{readme}</ReactMarkdown>
             </div>
           ) : (
-            <div className="card" style={{ padding: '16px', background: 'var(--bg-secondary)' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <pre
                 style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   color: 'var(--text-primary)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',

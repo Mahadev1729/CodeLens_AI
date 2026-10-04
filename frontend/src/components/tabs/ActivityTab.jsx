@@ -1,31 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  History, 
-  MessageSquare, 
   Trash2, 
   Search, 
-  Filter, 
-  FileText, 
-  GitBranch, 
-  Zap, 
-  Bug, 
   Clock, 
-  User,
-  ChevronDown,
-  ChevronUp
+  MessageSquare, 
+  ChevronDown, 
+  ChevronUp 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '../../services/api';
 
 const ACTIVITY_TYPE_MAP = {
-  clone: { label: '📦 Clone Repo', class: 'status-ready' },
-  build_kb: { label: '⚡ Build KB', class: 'status-ready' },
-  chat: { label: '💬 Chat Query', class: 'status-pending' },
-  summary: { label: '📋 Summary', class: 'status-pending' },
-  bugs: { label: '🐛 Bug Finder', class: 'status-error' },
-  architecture: { label: '🏗️ Architecture', class: 'status-ready' },
-  readme: { label: '📝 README', class: 'status-ready' },
-  file_explain: { label: '🤖 File Explain', class: 'status-pending' },
+  clone: { label: 'Clone', class: 'status-ready' },
+  build_kb: { label: 'Index', class: 'status-ready' },
+  chat: { label: 'Chat', class: 'status-pending' },
+  summary: { label: 'Summary', class: 'status-pending' },
+  bugs: { label: 'Audit', class: 'status-error' },
+  architecture: { label: 'Architecture', class: 'status-ready' },
+  readme: { label: 'README', class: 'status-ready' },
+  file_explain: { label: 'Explain', class: 'status-pending' },
 };
 
 export default function ActivityTab({ user }) {
@@ -91,7 +84,6 @@ export default function ActivityTab({ user }) {
     return matchesType && matchesSearch;
   });
 
-  // Group chat history into Q&A pairs
   const chatPairs = [];
   let i = 0;
   while (i < chatHistory.length) {
@@ -121,12 +113,12 @@ export default function ActivityTab({ user }) {
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>📜 Past Activity & History Dashboard</h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          Detailed record of your past queries, repository analyses, and system interactions
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>Activity & History</h2>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+          Log of past operations and queries
         </p>
       </div>
 
@@ -134,65 +126,65 @@ export default function ActivityTab({ user }) {
       {stats && (
         <div className="metric-grid">
           <div className="metric-card">
-            <div className="metric-label">👤 Active Account</div>
-            <div className="metric-val" style={{ fontSize: '1.1rem' }}>{user || 'Guest'}</div>
+            <div className="metric-label">Account</div>
+            <div className="metric-val" style={{ fontSize: '1rem' }}>{user || 'Guest'}</div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">💬 Questions Asked</div>
+            <div className="metric-label">Queries</div>
             <div className="metric-val">{stats.total_questions || 0}</div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">📦 Repos Explored</div>
+            <div className="metric-label">Repositories</div>
             <div className="metric-val">{stats.distinct_repos_count || 0}</div>
           </div>
           <div className="metric-card">
-            <div className="metric-label">⚡ Total Activities</div>
+            <div className="metric-label">Events</div>
             <div className="metric-val">{stats.total_activities || 0}</div>
           </div>
         </div>
       )}
 
       {/* Sub-tabs toggle */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+      <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
         <button
           onClick={() => setSubTab('timeline')}
           className={`btn ${subTab === 'timeline' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+          style={{ padding: '6px 14px', fontSize: '0.82rem' }}
         >
-          <Clock size={15} />
-          <span>Activity Timeline ({activities.length})</span>
+          <Clock size={13} />
+          <span>Timeline ({activities.length})</span>
         </button>
         <button
           onClick={() => setSubTab('chats')}
           className={`btn ${subTab === 'chats' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+          style={{ padding: '6px 14px', fontSize: '0.82rem' }}
         >
-          <MessageSquare size={15} />
-          <span>Past Conversations ({chatPairs.length})</span>
+          <MessageSquare size={13} />
+          <span>Conversations ({chatPairs.length})</span>
         </button>
       </div>
 
       {/* 1. Activity Timeline View */}
       {subTab === 'timeline' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Controls */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search activities by title, repository, or details..."
+                placeholder="Search activity..."
                 className="input-field"
-                style={{ width: '100%', paddingLeft: '34px', fontSize: '0.85rem' }}
+                style={{ width: '100%', paddingLeft: '30px', fontSize: '0.82rem' }}
               />
               <Search
-                size={15}
+                size={13}
                 style={{
                   position: 'absolute',
-                  left: '10px',
+                  left: '9px',
                   top: '50%',
-                  transform: 'translateY(-50)',
+                  transform: 'translateY(-50%)',
                   color: 'var(--text-muted)',
                 }}
               />
@@ -202,63 +194,62 @@ export default function ActivityTab({ user }) {
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
               className="select-field"
-              style={{ fontSize: '0.85rem', padding: '8px 12px' }}
+              style={{ fontSize: '0.82rem', padding: '6px 10px' }}
             >
               <option value="all">All Events</option>
-              <option value="clone">📦 Clones</option>
-              <option value="build_kb">⚡ Knowledge Base</option>
-              <option value="chat">💬 Chat Questions</option>
-              <option value="summary">📋 Summaries</option>
-              <option value="bugs">🐛 Bug Reports</option>
-              <option value="architecture">🏗️ Architecture</option>
-              <option value="readme">📝 READMEs</option>
-              <option value="file_explain">🤖 File Explanations</option>
+              <option value="clone">Clone</option>
+              <option value="build_kb">Index</option>
+              <option value="chat">Chat</option>
+              <option value="summary">Summary</option>
+              <option value="bugs">Audit</option>
+              <option value="architecture">Architecture</option>
+              <option value="readme">README</option>
+              <option value="file_explain">Explain</option>
             </select>
 
             {activities.length > 0 && (
               <button
                 onClick={handleClearActivities}
                 className="btn btn-danger"
-                style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
               >
-                <Trash2 size={14} />
-                <span>Clear Log</span>
+                <Trash2 size={13} />
+                <span>Clear</span>
               </button>
             )}
           </div>
 
           {/* Timeline List */}
           {filteredActivities.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-              <History size={36} style={{ color: 'var(--text-muted)', marginBottom: '10px' }} />
-              <p style={{ color: 'var(--text-secondary)' }}>No activities found matching your criteria.</p>
+            <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem' }}>No activity records found.</p>
             </div>
           ) : (
             filteredActivities.map((act, index) => {
               const typeInfo = ACTIVITY_TYPE_MAP[act.activity_type] || {
-                label: '⚡ Action',
+                label: 'Action',
                 class: 'status-ready',
               };
               return (
-                <div key={index} className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div key={index} className="card" style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span className={`status-badge ${typeInfo.class}`}>
                         {typeInfo.label}
                       </span>
-                      <strong style={{ fontSize: '0.92rem', color: '#fff' }}>{act.title}</strong>
+                      <strong style={{ fontSize: '0.88rem', color: '#fff' }}>{act.title}</strong>
                       {act.repo_name && (
                         <span className="source-badge">
-                          📦 {act.repo_name}
+                          {act.repo_name}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      🕒 {act.timestamp}
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      {act.timestamp}
                     </div>
                   </div>
                   {act.details && (
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', paddingLeft: '4px' }}>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                       {act.details}
                     </div>
                   )}
@@ -271,30 +262,29 @@ export default function ActivityTab({ user }) {
 
       {/* 2. Past Chat Conversations View */}
       {subTab === 'chats' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             {chatPairs.length > 0 && (
               <button
                 onClick={handleClearChatHistory}
                 className="btn btn-danger"
-                style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
               >
-                <Trash2 size={14} />
-                <span>Clear All Chat History</span>
+                <Trash2 size={13} />
+                <span>Clear All</span>
               </button>
             )}
           </div>
 
           {chatPairs.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-              <MessageSquare size={36} style={{ color: 'var(--text-muted)', marginBottom: '10px' }} />
-              <p style={{ color: 'var(--text-secondary)' }}>No previous chat conversations saved yet.</p>
+            <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem' }}>No chat history saved yet.</p>
             </div>
           ) : (
             chatPairs.map((pair, idx) => {
               const isExpanded = expandedChat === idx;
               return (
-                <div key={idx} className="card" style={{ padding: '16px' }}>
+                <div key={idx} className="card" style={{ padding: '12px 16px' }}>
                   <div
                     onClick={() => setExpandedChat(isExpanded ? -1 : idx)}
                     style={{
@@ -304,50 +294,30 @@ export default function ActivityTab({ user }) {
                       cursor: 'pointer',
                     }}
                   >
+                    <strong style={{ fontSize: '0.88rem', color: '#fff' }}>
+                      {pair.question.length > 80 ? `${pair.question.slice(0, 80)}...` : pair.question}
+                    </strong>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <MessageSquare size={16} style={{ color: 'var(--accent-blue)' }} />
-                      <strong style={{ fontSize: '0.92rem', color: '#fff' }}>
-                        Q: {pair.question.length > 80 ? `${pair.question.slice(0, 80)}...` : pair.question}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>🕒 {pair.timestamp}</span>
-                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{pair.timestamp}</span>
+                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--accent-blue)', fontWeight: 600, marginBottom: '4px' }}>
-                          Question:
-                        </div>
-                        <p style={{ fontSize: '0.9rem', color: '#fff' }}>{pair.question}</p>
-                      </div>
-
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {pair.answer && (
-                        <div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--accent-purple)', fontWeight: 600, marginBottom: '4px' }}>
-                            Answer:
-                          </div>
-                          <div className="markdown-body" style={{ fontSize: '0.88rem' }}>
-                            <ReactMarkdown>{pair.answer}</ReactMarkdown>
-                          </div>
+                        <div className="markdown-body" style={{ fontSize: '0.86rem' }}>
+                          <ReactMarkdown>{pair.answer}</ReactMarkdown>
                         </div>
                       )}
 
                       {pair.sources && pair.sources.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                            Referenced Sources:
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {pair.sources.map((s, si) => (
-                              <span key={si} className="source-badge">
-                                📄 {s}
-                              </span>
-                            ))}
-                          </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {pair.sources.map((s, si) => (
+                            <span key={si} className="source-badge">
+                              {s}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>

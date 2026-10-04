@@ -33,7 +33,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         setTimeout(() => {
           onAuthSuccess(res.username, {});
           onClose();
-        }, 800);
+        }, 600);
       }
     } catch (err) {
       setError(err.message || 'Authentication failed.');
@@ -46,31 +46,18 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: 'rgba(88, 166, 255, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <User size={20} style={{ color: 'var(--accent-blue)' }} />
-            </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>
-              {tab === 'login' ? 'Sign In to CodeMentorAI' : 'Create Account'}
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+              {tab === 'login' ? 'Sign In' : 'Create Account'}
             </h2>
           </div>
           <button
             onClick={onClose}
             className="btn btn-outline"
-            style={{ padding: '6px', borderRadius: '50%' }}
+            style={{ padding: '4px', borderRadius: '50%' }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
@@ -81,8 +68,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             gridTemplateColumns: '1fr 1fr',
             background: 'var(--bg-primary)',
             borderRadius: 'var(--radius-md)',
-            padding: '4px',
-            marginBottom: '20px',
+            padding: '3px',
+            marginBottom: '16px',
+            border: '1px solid var(--border-color)',
           }}
         >
           <button
@@ -90,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               setTab('login');
               setError('');
             }}
-            className={`tab-btn ${tab === 'login' ? 'active' : ''}`}
+            className={`auth-tab-btn ${tab === 'login' ? 'active' : ''}`}
             style={{ justifyContent: 'center' }}
           >
             Sign In
@@ -100,104 +88,58 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               setTab('register');
               setError('');
             }}
-            className={`tab-btn ${tab === 'register' ? 'active' : ''}`}
+            className={`auth-tab-btn ${tab === 'register' ? 'active' : ''}`}
             style={{ justifyContent: 'center' }}
           >
-            Create Account
+            Register
           </button>
         </div>
 
-        {/* Error / Success Alerts */}
+        {/* Alerts */}
         {error && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(248, 81, 73, 0.12)',
-              border: '1px solid rgba(248, 81, 73, 0.3)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--accent-red)',
-              fontSize: '0.85rem',
-              marginBottom: '16px',
-            }}
-          >
-            <AlertCircle size={16} />
+          <div className="auth-alert-error" style={{ marginBottom: '14px' }}>
+            <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
         {successMsg && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(63, 185, 80, 0.12)',
-              border: '1px solid rgba(63, 185, 80, 0.3)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--accent-green)',
-              fontSize: '0.85rem',
-              marginBottom: '16px',
-            }}
-          >
-            <CheckCircle size={16} />
+          <div className="auth-alert-success" style={{ marginBottom: '14px' }}>
+            <CheckCircle size={15} />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div className="input-group">
             <label className="input-label">Username</label>
-            <div style={{ position: 'relative' }}>
+            <div className="auth-input-wrapper">
+              <User size={14} className="auth-field-icon" />
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="developer_123"
-                className="input-field"
-                style={{ width: '100%', paddingLeft: '36px' }}
+                placeholder="Username"
+                className="input-field auth-input"
                 autoComplete="username"
                 required
-              />
-              <User
-                size={16}
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)',
-                }}
               />
             </div>
           </div>
 
           <div className="input-group">
             <label className="input-label">Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="auth-input-wrapper">
+              <Lock size={14} className="auth-field-icon" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input-field"
-                style={{ width: '100%', paddingLeft: '36px' }}
+                className="input-field auth-input"
                 autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                 required
-              />
-              <Lock
-                size={16}
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)',
-                }}
               />
             </div>
           </div>
@@ -206,10 +148,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             type="submit"
             disabled={loading}
             className="btn btn-primary btn-block"
-            style={{ marginTop: '10px' }}
+            style={{ marginTop: '8px' }}
           >
             <span>{tab === 'login' ? 'Sign In' : 'Create Account'}</span>
-            <ArrowRight size={16} />
+            <ArrowRight size={15} />
           </button>
         </form>
       </div>

@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { 
   DownloadCloud, 
-  Zap, 
   GitBranch, 
   FileCode, 
-  Hash, 
   FolderGit2, 
   Loader2, 
-  CheckCircle, 
-  AlertTriangle,
-  ChevronRight,
-  X
+  X,
+  Layers
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -37,23 +33,24 @@ export default function Sidebar({
   const extCounts = stats?.extension_counts || {};
   const topExts = Object.entries(extCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
+    .slice(0, 5);
 
   return (
     <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
-      {/* Mobile Drawer Header with Close Button */}
+      {/* Mobile Drawer Header */}
       <div className="sidebar-mobile-header">
-        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-          Repositories & Settings
+        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#ffffff' }}>
+          Workspace
         </span>
         {onClose && (
           <button
             onClick={onClose}
-            className="btn btn-icon"
+            className="btn btn-outline"
+            style={{ padding: '4px', borderRadius: '50%' }}
             title="Close sidebar"
             aria-label="Close sidebar"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -61,8 +58,8 @@ export default function Sidebar({
       {/* 1. Clone New Repo */}
       <div className="sidebar-section">
         <div className="section-title">
-          <DownloadCloud size={16} />
-          <span>Clone GitHub Repo</span>
+          <DownloadCloud size={14} />
+          <span>Clone Repository</span>
         </div>
         <form onSubmit={handleClone} className="input-group">
           <input
@@ -81,14 +78,11 @@ export default function Sidebar({
             >
               {isCloning ? (
                 <>
-                  <Loader2 size={16} className="spin-animate" />
+                  <Loader2 size={14} className="spin-animate" />
                   <span>Cloning...</span>
                 </>
               ) : (
-                <>
-                  <DownloadCloud size={16} />
-                  <span>Clone</span>
-                </>
+                <span>Clone</span>
               )}
             </button>
 
@@ -100,14 +94,11 @@ export default function Sidebar({
             >
               {isBuildingKb ? (
                 <>
-                  <Loader2 size={16} className="spin-animate" />
+                  <Loader2 size={14} className="spin-animate" />
                   <span>Indexing...</span>
                 </>
               ) : (
-                <>
-                  <Zap size={16} style={{ color: 'var(--accent-orange)' }} />
-                  <span>Build KB</span>
-                </>
+                <span>Index</span>
               )}
             </button>
           </div>
@@ -118,8 +109,8 @@ export default function Sidebar({
       {localRepos && localRepos.length > 0 && (
         <div className="sidebar-section">
           <div className="section-title">
-            <FolderGit2 size={16} />
-            <span>Local Repositories</span>
+            <FolderGit2 size={14} />
+            <span>Repositories</span>
           </div>
           <select
             value={activeRepo?.name || ''}
@@ -129,10 +120,10 @@ export default function Sidebar({
             }}
             className="select-field"
           >
-            <option value="" disabled>Select a repository...</option>
+            <option value="" disabled>Select repository...</option>
             {localRepos.map((r) => (
               <option key={r.name} value={r.name}>
-                {r.name} {r.knowledge_base_built ? '⚡ (KB Ready)' : ''}
+                {r.name} {r.knowledge_base_built ? '✓' : ''}
               </option>
             ))}
           </select>
@@ -144,24 +135,26 @@ export default function Sidebar({
         <>
           <div className="sidebar-section">
             <div className="section-title">
-              <GitBranch size={16} />
-              <span>Repository Details</span>
+              <GitBranch size={14} />
+              <span>Details</span>
             </div>
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Branch:</span>
-                <strong>{info?.branch || 'N/A'}</strong>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Branch</span>
+                <strong style={{ color: '#ffffff' }}>{info?.branch || 'N/A'}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Commit:</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{info?.commit_hash || 'N/A'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Commit</span>
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                  {info?.commit_hash ? info.commit_hash.slice(0, 7) : 'N/A'}
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Knowledge Base:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Status</span>
                 {activeRepo.knowledgeBaseBuilt ? (
-                  <span className="status-badge status-ready">⚡ Ready</span>
+                  <span className="status-badge status-ready">Indexed</span>
                 ) : (
-                  <span className="status-badge status-pending">○ Not Built</span>
+                  <span className="status-badge status-pending">Not Indexed</span>
                 )}
               </div>
             </div>
@@ -171,37 +164,30 @@ export default function Sidebar({
           {stats && (
             <div className="sidebar-section">
               <div className="section-title">
-                <FileCode size={16} />
-                <span>Code Statistics</span>
+                <FileCode size={14} />
+                <span>Overview</span>
               </div>
               <div className="metric-grid">
                 <div className="metric-card">
-                  <div className="metric-label">Total Files</div>
+                  <div className="metric-label">Files</div>
                   <div className="metric-val">{stats.total_files || 0}</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">Total Lines</div>
+                  <div className="metric-label">Lines</div>
                   <div className="metric-val">{(stats.total_lines || 0).toLocaleString()}</div>
                 </div>
               </div>
 
-              {/* Language breakdown */}
               {topExts.length > 0 && (
-                <div style={{ marginTop: '8px' }}>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Language Distribution
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {topExts.map(([ext, count]) => (
-                      <span
-                        key={ext}
-                        className="source-badge"
-                        style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                      >
-                        {ext || 'other'}: {count}
-                      </span>
-                    ))}
-                  </div>
+                <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {topExts.map(([ext, count]) => (
+                    <span
+                      key={ext}
+                      className="source-badge"
+                    >
+                      {ext || 'other'}: {count}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
@@ -209,10 +195,9 @@ export default function Sidebar({
         </>
       ) : (
         <div className="sidebar-section">
-          <div className="card" style={{ textAlign: 'center', padding: '24px 16px' }}>
-            <FolderGit2 size={32} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Clone a GitHub repository or choose a local one above to begin.
+          <div className="card" style={{ textAlign: 'center', padding: '20px 14px' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              Clone or select a repository to get started.
             </p>
           </div>
         </div>

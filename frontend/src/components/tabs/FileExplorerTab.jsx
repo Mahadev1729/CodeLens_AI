@@ -3,14 +3,12 @@ import {
   FolderTree, 
   FileCode, 
   Search, 
-  Filter, 
-  Sparkles, 
   Loader2, 
   FileText, 
   Bot, 
-  Code,
-  Copy,
-  Check
+  Code, 
+  Copy, 
+  Check 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '../../services/api';
@@ -98,7 +96,7 @@ export default function FileExplorerTab({
       );
       setExplanation(res.explanation);
     } catch (err) {
-      setExplanation(`⚠️ **Error:** Failed to explain file: ${err.message}`);
+      setExplanation(`Error: Failed to explain file: ${err.message}`);
     } finally {
       setExplaining(false);
     }
@@ -114,10 +112,9 @@ export default function FileExplorerTab({
   if (!activeRepo) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">📁</div>
         <h3 className="empty-title">No Repository Loaded</h3>
         <p className="empty-desc">
-          Clone or select a repository from the sidebar to explore and analyze files.
+          Select or clone a repository from the sidebar to explore files.
         </p>
       </div>
     );
@@ -135,9 +132,9 @@ export default function FileExplorerTab({
     <div className="file-explorer-grid">
       {/* Left: Search & File Tree */}
       <div className="file-tree-pane">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <FolderTree size={18} style={{ color: 'var(--accent-blue)' }} />
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>Files ({filteredFiles.length})</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FolderTree size={16} />
+          <h3 style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>Files ({filteredFiles.length})</h3>
         </div>
 
         {/* Search */}
@@ -148,13 +145,13 @@ export default function FileExplorerTab({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search files..."
             className="input-field"
-            style={{ width: '100%', paddingLeft: '32px', fontSize: '0.85rem' }}
+            style={{ width: '100%', paddingLeft: '30px', fontSize: '0.82rem' }}
           />
           <Search
-            size={14}
+            size={13}
             style={{
               position: 'absolute',
-              left: '10px',
+              left: '9px',
               top: '50%',
               transform: 'translateY(-50%)',
               color: 'var(--text-muted)',
@@ -167,11 +164,11 @@ export default function FileExplorerTab({
           value={selectedExt}
           onChange={(e) => setSelectedExt(e.target.value)}
           className="select-field"
-          style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+          style={{ fontSize: '0.8rem', padding: '5px 8px' }}
         >
           {extensions.map((ext) => (
             <option key={ext} value={ext}>
-              {ext === 'All' ? 'All File Types' : ext}
+              {ext === 'All' ? 'All Types' : ext}
             </option>
           ))}
         </select>
@@ -187,7 +184,7 @@ export default function FileExplorerTab({
                 className={`file-item-btn ${isSelected ? 'active' : ''}`}
                 title={file.path}
               >
-                <FileCode size={14} style={{ flexShrink: 0, color: isSelected ? 'var(--accent-blue)' : 'var(--text-muted)' }} />
+                <FileCode size={13} style={{ flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.path}</span>
               </button>
             );
@@ -201,23 +198,23 @@ export default function FileExplorerTab({
           <>
             {/* Header */}
             <div className="code-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FileText size={18} style={{ color: 'var(--accent-blue)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} />
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>{activeFile.path}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    {fileContent?.lines || 0} lines · {fileContent?.size_str || '0 KB'} · {fileContent?.language || 'text'}
+                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>{activeFile.path}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {fileContent?.lines || 0} lines · {fileContent?.size_str || '0 KB'}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
                 <button
                   onClick={() => setViewTab('code')}
                   className={`btn ${viewTab === 'code' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem' }}
                 >
-                  <Code size={14} />
+                  <Code size={13} />
                   <span>Code</span>
                 </button>
 
@@ -225,23 +222,23 @@ export default function FileExplorerTab({
                   onClick={handleExplainFile}
                   disabled={explaining}
                   className={`btn ${viewTab === 'explain' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem' }}
                 >
                   {explaining ? (
-                    <Loader2 size={14} className="spin-animate" />
+                    <Loader2 size={13} className="spin-animate" />
                   ) : (
-                    <Bot size={14} style={{ color: 'var(--accent-purple)' }} />
+                    <Bot size={13} />
                   )}
-                  <span>Explain File</span>
+                  <span>Explain</span>
                 </button>
 
                 <button
                   onClick={handleCopyCode}
                   className="btn btn-outline"
-                  style={{ padding: '6px 10px', fontSize: '0.8rem' }}
+                  style={{ padding: '5px 8px', fontSize: '0.78rem' }}
                   title="Copy code"
                 >
-                  {copied ? <Check size={14} style={{ color: 'var(--accent-green)' }} /> : <Copy size={14} />}
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
                 </button>
               </div>
             </div>
@@ -249,27 +246,27 @@ export default function FileExplorerTab({
             {/* Body */}
             <div className="code-body">
               {contentLoading ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '10px', color: 'var(--text-secondary)' }}>
-                  <Loader2 size={24} className="spin-animate" />
-                  <span>Loading file content...</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.86rem' }}>
+                  <Loader2 size={18} className="spin-animate" />
+                  <span>Loading file...</span>
                 </div>
               ) : viewTab === 'code' ? (
-                <pre style={{ margin: 0, color: '#e6edf3', lineHeight: 1.6 }}>
+                <pre style={{ margin: 0, color: '#ffffff', lineHeight: 1.5 }}>
                   <code>{fileContent?.content}</code>
                 </pre>
               ) : (
-                <div style={{ padding: '10px', maxWidth: '800px' }}>
+                <div style={{ padding: '6px', maxWidth: '800px' }}>
                   {explaining ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)', padding: '20px 0' }}>
-                      <Loader2 size={20} className="spin-animate" />
-                      <span>AI analyzing purpose, components, and patterns of {activeFile.filename}...</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', padding: '16px 0', fontSize: '0.86rem' }}>
+                      <Loader2 size={16} className="spin-animate" />
+                      <span>Analyzing {activeFile.filename}...</span>
                     </div>
                   ) : explanation ? (
                     <div className="markdown-body">
                       <ReactMarkdown>{explanation}</ReactMarkdown>
                     </div>
                   ) : (
-                    <p style={{ color: 'var(--text-secondary)' }}>Click "Explain File" to generate AI analysis.</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem' }}>Click "Explain" for analysis.</p>
                   )}
                 </div>
               )}
@@ -277,9 +274,8 @@ export default function FileExplorerTab({
           </>
         ) : (
           <div className="empty-state">
-            <div className="empty-icon">👈</div>
             <h3 className="empty-title">Select a File</h3>
-            <p className="empty-desc">Choose any file from the file explorer tree to view code and AI explanation.</p>
+            <p className="empty-desc">Choose a file from the explorer on the left.</p>
           </div>
         )}
       </div>

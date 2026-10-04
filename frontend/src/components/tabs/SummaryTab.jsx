@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, RefreshCw, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Loader2, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '../../services/api';
 
@@ -38,7 +38,7 @@ export default function SummaryTab({
         onSummaryGenerated(res.summary);
       }
     } catch (err) {
-      setError(err.message || 'Failed to generate repository summary.');
+      setError(err.message || 'Failed to generate summary.');
     } finally {
       setLoading(false);
     }
@@ -47,33 +47,33 @@ export default function SummaryTab({
   if (!activeRepo) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">📋</div>
         <h3 className="empty-title">No Repository Loaded</h3>
         <p className="empty-desc">
-          Clone or select a repository from the sidebar to generate a comprehensive architectural and tech stack summary.
+          Select or clone a repository from the sidebar to view its summary.
         </p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>📋 Repository Overview & Summary</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            AI-powered architecture analysis, folder organization, and tech stack detection for {activeRepo.name}
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>Overview</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            Codebase structure and summary for {activeRepo.name}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           {summary && (
             <button
               onClick={() => handleGenerate(true)}
               disabled={loading}
               className="btn btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.82rem' }}
             >
-              <RefreshCw size={15} className={loading ? 'spin-animate' : ''} />
+              <RefreshCw size={13} className={loading ? 'spin-animate' : ''} />
               <span>Regenerate</span>
             </button>
           )}
@@ -82,38 +82,33 @@ export default function SummaryTab({
 
       {/* Error alert */}
       {error && (
-        <div className="card" style={{ background: 'rgba(248,81,73,0.1)', borderColor: 'rgba(248,81,73,0.3)', color: 'var(--accent-red)' }}>
+        <div className="card" style={{ background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.3)', color: '#fca5a5', fontSize: '0.85rem' }}>
           {error}
         </div>
       )}
 
-      {/* Action / Content */}
+      {/* Initial Trigger */}
       {!summary && !loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <Sparkles size={36} style={{ color: 'var(--accent-blue)', marginBottom: '14px' }} />
-          <h3 style={{ fontSize: '1.15rem', marginBottom: '8px', color: '#fff' }}>Generate Summary for {activeRepo.name}</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 20px' }}>
-            Analyzes folder trees, entry points, configuration files, and core modules to produce an executive overview.
+        <div className="card" style={{ textAlign: 'center', padding: '36px 20px' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', color: '#fff' }}>Generate Summary</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 16px' }}>
+            Analyze modules, architecture, and entry points to produce a project overview.
           </p>
-          <button onClick={() => handleGenerate(false)} className="btn btn-primary" style={{ padding: '10px 24px' }}>
-            <Sparkles size={16} />
+          <button onClick={() => handleGenerate(false)} className="btn btn-primary" style={{ padding: '8px 20px' }}>
             <span>Generate Summary</span>
           </button>
         </div>
       )}
 
       {loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <Loader2 size={36} className="spin-animate" style={{ color: 'var(--accent-blue)', margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.1rem', color: '#fff' }}>Analyzing repository components...</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Scanning folder tree, dependencies, entry points, and source code.
-          </p>
+        <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
+          <Loader2 size={28} className="spin-animate" style={{ color: '#ffffff', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '0.98rem', color: '#fff' }}>Analyzing repository...</h3>
         </div>
       )}
 
       {summary && !loading && (
-        <div className="card markdown-body" style={{ padding: '28px', background: 'var(--bg-secondary)' }}>
+        <div className="card markdown-body" style={{ padding: '24px' }}>
           <ReactMarkdown>{summary}</ReactMarkdown>
         </div>
       )}

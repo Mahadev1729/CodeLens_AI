@@ -10,7 +10,6 @@ import {
   History, 
   CheckCircle2, 
   AlertCircle, 
-  Sparkles,
   Info
 } from 'lucide-react';
 import Navbar from './components/Navbar';
@@ -32,8 +31,8 @@ const TABS = [
   { id: 'bugs', label: 'Bug Finder', icon: Bug },
   { id: 'architecture', label: 'Architecture', icon: GitFork },
   { id: 'readme', label: 'README', icon: FileEdit },
-  { id: 'files', label: 'File Explorer', icon: FolderTree },
-  { id: 'activity', label: 'Activity & History', icon: History },
+  { id: 'files', label: 'Files', icon: FolderTree },
+  { id: 'activity', label: 'Activity', icon: History },
 ];
 
 export default function App() {
@@ -55,7 +54,7 @@ export default function App() {
   const [groqApiKey, setGroqApiKey] = useState(localStorage.getItem('codementor_groq_key') || '');
   const [selectedModel, setSelectedModel] = useState('openai/gpt-oss-120b');
   
-  // Caches for the active repository
+  // Caches for active repository
   const [summaryCache, setSummaryCache] = useState('');
   const [bugCache, setBugCache] = useState(null);
   const [archCache, setArchCache] = useState(null);
@@ -67,7 +66,7 @@ export default function App() {
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 5000);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   useEffect(() => {
@@ -124,7 +123,6 @@ export default function App() {
         info: statusRes.repo_info,
         stats: statusRes.repo_stats,
       });
-      // Clear caches for new repo
       setSummaryCache('');
       setBugCache(null);
       setArchCache(null);
@@ -146,7 +144,7 @@ export default function App() {
         stats: res.repo_stats,
       });
       await refreshLocalRepos();
-      showNotification('success', `Repository '${res.repo_name}' cloned successfully!`);
+      showNotification('success', `Repository '${res.repo_name}' cloned successfully.`);
     } catch (err) {
       showNotification('error', err.message || 'Clone failed.');
     } finally {
@@ -159,18 +157,17 @@ export default function App() {
     setIsBuildingKb(true);
     try {
       const res = await api.buildKb(activeRepo.path, activeRepo.name, groqApiKey);
-      showNotification('info', res.message || 'Building knowledge base in background...');
+      showNotification('info', res.message || 'Indexing repository in background...');
 
-      // Poll status every 2.5s until build is completed or encounters an error
       const pollStartTime = Date.now();
-      const MAX_POLL_MS = 600000; // 10-minute upper limit for very large repos
+      const MAX_POLL_MS = 600000;
 
       const pollTimer = setInterval(async () => {
         try {
           if (Date.now() - pollStartTime > MAX_POLL_MS) {
             clearInterval(pollTimer);
             setIsBuildingKb(false);
-            showNotification('error', 'Knowledge base build timed out. Please try again.');
+            showNotification('error', 'Indexing timed out. Please retry.');
             return;
           }
 
@@ -181,12 +178,11 @@ export default function App() {
             setIsBuildingKb(false);
             setActiveRepo((prev) => ({ ...prev, knowledgeBaseBuilt: true }));
             await refreshLocalRepos();
-            const chunkInfo = statusRes.total_chunks ? ` (${statusRes.total_chunks} chunks indexed)` : '';
-            showNotification('success', `Knowledge base built successfully!${chunkInfo}`);
+            showNotification('success', 'Repository indexed successfully.');
           } else if (statusRes.kb_status === 'error') {
             clearInterval(pollTimer);
             setIsBuildingKb(false);
-            showNotification('error', statusRes.kb_message || statusRes.kb_error || 'Failed to build knowledge base.');
+            showNotification('error', statusRes.kb_message || statusRes.kb_error || 'Indexing failed.');
           }
         } catch (pollErr) {
           console.warn('[Status Poll] Check failed:', pollErr);
@@ -195,14 +191,14 @@ export default function App() {
 
     } catch (err) {
       setIsBuildingKb(false);
-      showNotification('error', err.message || 'Failed to start knowledge base build.');
+      showNotification('error', err.message || 'Failed to start indexing.');
     }
   };
 
   const handleApiKeyChange = (newKey) => {
     setGroqApiKey(newKey);
     localStorage.setItem('codementor_groq_key', newKey);
-    showNotification('success', 'Groq API Key saved successfully.');
+    showNotification('success', 'API Key saved.');
   };
 
   const handleAuthSuccess = async (username, sessionState) => {
@@ -215,14 +211,14 @@ export default function App() {
       if (sessionState.readme_cache) setReadmeCache(sessionState.readme_cache);
     }
     await refreshLocalRepos();
-    showNotification('success', `Welcome to CodeMentorAI, ${username}!`);
+    showNotification('success', `Signed in as ${username}.`);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('codementor_token');
     localStorage.removeItem('codementor_user');
     setUser(null);
-    showNotification('info', 'Logged out successfully.');
+    showNotification('info', 'Logged out.');
   };
 
   const handleOpenFileInExplorer = (filePath) => {
@@ -233,16 +229,14 @@ export default function App() {
   // 1. Initial Auth Check loading screen
   if (isCheckingAuth) {
     return (
-      <div className="auth-fullscreen-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div className="auth-logo-icon">
-          <Brain size={30} style={{ color: 'var(--accent-blue)' }} />
-        </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Restoring workspace session...</p>
+      <div className="auth-fullscreen-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <Brain size={28} style={{ color: '#ffffff' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Loading workspace...</p>
       </div>
     );
   }
 
-  // 2. Unauthenticated: Show full-screen Auth Login/Registration portal first
+  // 2. Unauthenticated: Full-screen Auth portal
   if (!user) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
@@ -269,33 +263,28 @@ export default function App() {
         <div
           style={{
             position: 'fixed',
-            top: '74px',
-            right: '24px',
+            top: '70px',
+            right: '20px',
             zIndex: 999,
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '12px 20px',
+            gap: '8px',
+            padding: '10px 18px',
             borderRadius: 'var(--radius-md)',
-            background:
-              notification.type === 'success'
-                ? 'rgba(63, 185, 80, 0.95)'
-                : notification.type === 'error'
-                ? 'rgba(248, 81, 73, 0.95)'
-                : 'rgba(88, 166, 255, 0.95)',
-            color: '#fff',
+            background: '#18181b',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#ffffff',
             fontWeight: 500,
-            fontSize: '0.88rem',
+            fontSize: '0.84rem',
             boxShadow: 'var(--shadow-lg)',
-            backdropFilter: 'blur(8px)',
           }}
         >
           {notification.type === 'success' ? (
-            <CheckCircle2 size={18} />
+            <CheckCircle2 size={16} style={{ color: '#ffffff' }} />
           ) : notification.type === 'error' ? (
-            <AlertCircle size={18} />
+            <AlertCircle size={16} style={{ color: '#fca5a5' }} />
           ) : (
-            <Info size={18} />
+            <Info size={16} style={{ color: '#ffffff' }} />
           )}
           <span>{notification.message}</span>
         </div>
@@ -303,7 +292,6 @@ export default function App() {
 
       {/* 3. Main Workspace Layout */}
       <div className="main-layout">
-        {/* Mobile Sidebar Overlay Backdrop */}
         {isSidebarOpen && (
           <div
             className="sidebar-backdrop"
@@ -311,7 +299,6 @@ export default function App() {
           />
         )}
 
-        {/* Sidebar */}
         <Sidebar
           activeRepo={activeRepo}
           localRepos={localRepos}
@@ -327,7 +314,6 @@ export default function App() {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Content Tabs Area */}
         <main className="content-area">
           {/* Tabs Bar */}
           <div className="tabs-bar">
@@ -340,7 +326,7 @@ export default function App() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`tab-btn ${isActive ? 'active' : ''}`}
                 >
-                  <Icon size={16} />
+                  <Icon size={14} />
                   <span>{tab.label}</span>
                 </button>
               );

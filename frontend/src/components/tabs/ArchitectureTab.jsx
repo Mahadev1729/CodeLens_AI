@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  GitFork, 
   RefreshCw, 
   Loader2, 
   Copy, 
   Check, 
-  ExternalLink, 
-  Sparkles,
-  Download,
-  Code2,
-  Image as ImageIcon,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-  AlertTriangle,
-  Layers
+  Download, 
+  Code2, 
+  ZoomIn, 
+  ZoomOut, 
+  AlertTriangle 
 } from 'lucide-react';
 import mermaid from 'mermaid';
 import { api } from '../../services/api';
@@ -23,13 +17,13 @@ mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
   themeVariables: {
-    primaryColor: '#58a6ff',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#388bfd',
-    lineColor: '#58a6ff',
-    secondaryColor: '#161b22',
-    tertiaryColor: '#0d1117',
-    fontSize: '14px',
+    primaryColor: '#262626',
+    primaryTextColor: '#ffffff',
+    primaryBorderColor: '#52525b',
+    lineColor: '#ffffff',
+    secondaryColor: '#141414',
+    tertiaryColor: '#0a0a0a',
+    fontSize: '13px',
   },
   securityLevel: 'loose',
 });
@@ -131,50 +125,44 @@ export default function ArchitectureTab({
   if (!activeRepo) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">🏗️</div>
         <h3 className="empty-title">No Repository Loaded</h3>
         <p className="empty-desc">
-          Clone or select a repository from the sidebar to generate architecture diagrams.
+          Select or clone a repository from the sidebar to view architecture.
         </p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1050px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header & Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🏗️ System Architecture</span>
-            <span className="brand-badge" style={{ fontSize: '0.72rem' }}>
-              {selectedFormat === 'python' ? '🐍 Python Diagrams (Diagram-as-Code)' : '📊 Mermaid.js'}
-            </span>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+            System Architecture
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {selectedFormat === 'python'
-              ? 'Multi-layer system architecture with official cloud & framework icons'
-              : 'Interactive flowchart illustrating module dependencies and data flows'}
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            Component and dependency mapping for {activeRepo.name}
           </p>
         </div>
 
         {/* Engine Switcher & Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {/* Format Toggle */}
-          <div className="auth-tabs" style={{ padding: '3px', margin: 0 }}>
+          <div className="auth-tabs" style={{ padding: '2px', margin: 0 }}>
             <button
               onClick={() => handleFormatChange('python')}
               className={`auth-tab-btn ${selectedFormat === 'python' ? 'active' : ''}`}
-              style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
             >
-              🐍 Python Diagrams
+              Diagram
             </button>
             <button
               onClick={() => handleFormatChange('mermaid')}
               className={`auth-tab-btn ${selectedFormat === 'mermaid' ? 'active' : ''}`}
-              style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
             >
-              📊 Mermaid
+              Flowchart
             </button>
           </div>
 
@@ -184,52 +172,39 @@ export default function ArchitectureTab({
                 <button
                   onClick={handleDownloadImage}
                   className="btn btn-outline"
-                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                  title="Download Diagram PNG"
+                  style={{ padding: '5px 10px', fontSize: '0.78rem' }}
+                  title="Download PNG"
                 >
-                  <Download size={14} />
-                  <span>Download PNG</span>
+                  <Download size={13} />
+                  <span>Download</span>
                 </button>
               )}
 
               <button
                 onClick={() => setShowCode(!showCode)}
-                className={`btn ${showCode ? 'btn-primary' : 'btn-outline'}`}
-                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                className="btn btn-outline"
+                style={{ padding: '5px 10px', fontSize: '0.78rem' }}
               >
-                <Code2 size={14} />
-                <span>{showCode ? 'Hide Code' : 'View Code'}</span>
+                <Code2 size={13} />
+                <span>{showCode ? 'Hide Code' : 'Code'}</span>
               </button>
 
               <button
                 onClick={handleCopyCode}
                 className="btn btn-outline"
-                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                style={{ padding: '5px 10px', fontSize: '0.78rem' }}
               >
-                {copied ? <Check size={14} style={{ color: 'var(--accent-green)' }} /> : <Copy size={14} />}
-                <span>{copied ? 'Copied!' : 'Copy'}</span>
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
-
-              {data.format === 'mermaid' && (
-                <a
-                  href="https://mermaid.live"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-outline"
-                  style={{ padding: '6px 12px', fontSize: '0.82rem', textDecoration: 'none' }}
-                >
-                  <ExternalLink size={14} />
-                  <span>Live Editor</span>
-                </a>
-              )}
 
               <button
                 onClick={() => handleGenerate(true)}
                 disabled={loading}
                 className="btn btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                style={{ padding: '5px 10px', fontSize: '0.78rem' }}
               >
-                <RefreshCw size={14} className={loading ? 'spin-animate' : ''} />
+                <RefreshCw size={13} className={loading ? 'spin-animate' : ''} />
                 <span>Regenerate</span>
               </button>
             </>
@@ -238,102 +213,87 @@ export default function ArchitectureTab({
       </div>
 
       {error && (
-        <div className="card" style={{ background: 'rgba(248,81,73,0.1)', borderColor: 'rgba(248,81,73,0.3)', color: 'var(--accent-red)' }}>
+        <div className="card" style={{ background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.3)', color: '#fca5a5', fontSize: '0.85rem' }}>
           {error}
         </div>
       )}
 
       {/* Initial Trigger Screen */}
       {!data && !loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(88, 166, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Layers size={26} style={{ color: 'var(--accent-blue)' }} />
-            </div>
-          </div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
-            Generate System Architecture
+        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', color: '#fff' }}>
+            Generate Architecture
           </h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-            Synthesizes your codebase structure, packages, data stores, and framework layers into a clean architectural map with <strong>Python Diagram-as-Code</strong> or <strong>Mermaid</strong>.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 18px', lineHeight: 1.5 }}>
+            Synthesizes codebase modules, services, and connections into a visual map.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-            <button onClick={() => handleGenerate(false, 'python')} className="btn btn-primary" style={{ padding: '10px 24px' }}>
-              <Sparkles size={16} />
-              <span>Generate Python Diagrams</span>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+            <button onClick={() => handleGenerate(false, 'python')} className="btn btn-primary" style={{ padding: '8px 18px' }}>
+              <span>Generate Diagram</span>
             </button>
-            <button onClick={() => handleGenerate(false, 'mermaid')} className="btn btn-secondary" style={{ padding: '10px 20px' }}>
-              <span>Generate Mermaid</span>
+            <button onClick={() => handleGenerate(false, 'mermaid')} className="btn btn-secondary" style={{ padding: '8px 18px' }}>
+              <span>Generate Flowchart</span>
             </button>
           </div>
         </div>
       )}
 
       {loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <Loader2 size={36} className="spin-animate" style={{ color: 'var(--accent-blue)', margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.1rem', color: '#fff' }}>
-            {selectedFormat === 'python'
-              ? 'Generating Python Diagram-as-Code & Rendering Image...'
-              : 'Synthesizing Mermaid Flowchart...'}
+        <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
+          <Loader2 size={28} className="spin-animate" style={{ color: '#ffffff', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '0.98rem', color: '#fff' }}>
+            Generating architecture diagram...
           </h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Extracting modules, services, database tables, and connection pipelines.
-          </p>
         </div>
       )}
 
       {/* Main Diagram Display */}
       {data && !loading && (
         <>
-          {/* Python Diagram Renderer */}
           {data.format === 'python' ? (
-            <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Image Controls */}
+            <div className="card" style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {data.image_base64 && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', alignItems: 'center' }}>
                   <button
                     onClick={() => setZoomLevel((prev) => Math.max(0.6, prev - 0.2))}
                     className="btn btn-outline"
-                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                    style={{ padding: '3px 6px', fontSize: '0.72rem' }}
                     title="Zoom Out"
                   >
-                    <ZoomOut size={13} />
+                    <ZoomOut size={12} />
                   </button>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', minWidth: '42px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: '36px', textAlign: 'center' }}>
                     {Math.round(zoomLevel * 100)}%
                   </span>
                   <button
                     onClick={() => setZoomLevel((prev) => Math.min(2.5, prev + 0.2))}
                     className="btn btn-outline"
-                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                    style={{ padding: '3px 6px', fontSize: '0.72rem' }}
                     title="Zoom In"
                   >
-                    <ZoomIn size={13} />
+                    <ZoomIn size={12} />
                   </button>
                   <button
                     onClick={() => setZoomLevel(1)}
                     className="btn btn-outline"
-                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                    title="Reset Zoom"
+                    style={{ padding: '3px 6px', fontSize: '0.72rem' }}
                   >
                     Reset
                   </button>
                 </div>
               )}
 
-              {/* Rendered Image */}
               {data.image_base64 ? (
                 <div
                   style={{
                     overflow: 'auto',
-                    maxHeight: '650px',
+                    maxHeight: '600px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    background: 'var(--bg-primary)',
+                    background: '#000000',
                     borderRadius: 'var(--radius-md)',
-                    padding: '20px',
+                    padding: '16px',
                     border: '1px solid var(--border-color)',
                   }}
                 >
@@ -345,26 +305,19 @@ export default function ArchitectureTab({
                       transformOrigin: 'top center',
                       transition: 'transform 0.15s ease-out',
                       maxWidth: zoomLevel <= 1 ? '100%' : 'none',
-                      borderRadius: '8px',
-                      boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+                      borderRadius: '6px',
                     }}
                   />
                 </div>
               ) : (
-                <div style={{ padding: '24px', textAlign: 'center', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)' }}>
-                  <AlertTriangle size={32} style={{ color: 'var(--accent-orange)', marginBottom: '10px' }} />
-                  <h4 style={{ color: '#fff', fontSize: '1rem', marginBottom: '6px' }}>Graphviz Runtime Notice</h4>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', maxWidth: '520px', margin: '0 auto 14px', lineHeight: 1.5 }}>
-                    The Python Diagram code was generated successfully! To render PNG images directly on your local system, install Graphviz (<code>winget install Graphviz</code> on Windows or <code>apt-get install graphviz</code> on Linux).
-                  </p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                    Click <strong>View Code</strong> above to run or copy the Python script.
+                <div style={{ padding: '20px', textAlign: 'center', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem' }}>
+                    Diagram code generated. View or copy code above.
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            /* Mermaid Diagram Renderer */
             <div className="mermaid-viewer">
               {svgContent ? (
                 <div
@@ -372,52 +325,51 @@ export default function ArchitectureTab({
                   style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
                 />
               ) : (
-                <pre style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', overflowX: 'auto' }}>
+                <pre style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', overflowX: 'auto' }}>
                   {data.diagram_code || data.raw}
                 </pre>
               )}
             </div>
           )}
 
-          {/* Architecture Notes */}
           {data.notes && (
-            <div className="card" style={{ padding: '20px' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>
-                📝 Architectural Breakdown
+            <div className="card" style={{ padding: '16px' }}>
+              <h4 style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
+                Breakdown
               </h4>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {data.notes}
               </p>
             </div>
           )}
 
-          {/* Code Viewer Panel */}
           {showCode && data.diagram_code && (
-            <div className="card" style={{ padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {data.format === 'python' ? '🐍 Python diagrams Source Code' : '📊 Mermaid Syntax'}
+            <div className="card" style={{ padding: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  Diagram Code
                 </span>
                 <button
                   onClick={handleCopyCode}
                   className="btn btn-outline"
-                  style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                  style={{ padding: '3px 8px', fontSize: '0.74rem' }}
                 >
-                  {copied ? <Check size={12} style={{ color: 'var(--accent-green)' }} /> : <Copy size={12} />}
+                  {copied ? <Check size={11} /> : <Copy size={11} />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
               <pre
                 style={{
-                  background: 'var(--bg-primary)',
-                  padding: '14px',
+                  background: '#000000',
+                  padding: '12px',
                   borderRadius: 'var(--radius-md)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                   overflowX: 'auto',
-                  color: '#e6edf3',
+                  color: '#e4e4e7',
                   lineHeight: 1.5,
                   border: '1px solid var(--border-color)',
+                  margin: 0,
                 }}
               >
                 {data.diagram_code}
@@ -429,4 +381,3 @@ export default function ArchitectureTab({
     </div>
   );
 }
-

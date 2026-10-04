@@ -8,28 +8,24 @@ import {
   User, 
   Loader2, 
   GitBranch, 
-  Zap, 
   DownloadCloud, 
   FolderGit2, 
-  Layers,
   ArrowRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '../../services/api';
 
 const QUICK_REPOS = [
-  { name: 'FastAPI', url: 'https://github.com/tiangolo/fastapi', desc: 'Modern Python web framework' },
-  { name: 'Flask', url: 'https://github.com/pallets/flask', desc: 'Lightweight WSGI Python microframework' },
-  { name: 'Express', url: 'https://github.com/expressjs/express', desc: 'Fast, minimalist web framework for Node.js' },
+  { name: 'FastAPI', url: 'https://github.com/tiangolo/fastapi' },
+  { name: 'Flask', url: 'https://github.com/pallets/flask' },
+  { name: 'Express', url: 'https://github.com/expressjs/express' },
 ];
 
 const SUGGESTIONS = [
-  'Explain the overall project architecture',
-  'How does authentication and authorization work?',
-  'What are the main API endpoints or entry points?',
-  'Explain the database models and schemas',
-  'What dependencies and third-party libraries are used?',
-  'Find potential bugs or performance bottlenecks',
+  'Explain overall architecture',
+  'How does authentication work?',
+  'What are the main entry points?',
+  'Find potential bugs or bottlenecks',
 ];
 
 export default function ChatTab({
@@ -49,7 +45,6 @@ export default function ChatTab({
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Load chat history when repo changes
   useEffect(() => {
     if (activeRepo?.name) {
       loadHistory();
@@ -76,7 +71,7 @@ export default function ChatTab({
     const userMsg = {
       role: 'user',
       content: text,
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -96,16 +91,16 @@ export default function ChatTab({
         role: 'assistant',
         content: res.answer,
         sources: res.sources,
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       const errorMsg = {
         role: 'assistant',
-        content: `⚠️ **Error:** ${err.message || 'Failed to generate answer. Please check your Groq API key and vector knowledge base.'}`,
+        content: `Error: ${err.message || 'Failed to generate answer.'}`,
         sources: [],
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -125,73 +120,48 @@ export default function ChatTab({
 
   if (!activeRepo) {
     return (
-      <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* Hub Hero Card */}
-        <div className="card" style={{ padding: '36px 28px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'rgba(88, 166, 255, 0.12)', border: '1px solid rgba(88, 166, 255, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <Sparkles size={28} style={{ color: 'var(--accent-blue)' }} />
-          </div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
-            Welcome to CodeMentorAI Workspace
+      <div style={{ maxWidth: '700px', margin: '40px auto 0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="card" style={{ padding: '32px 24px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+            Code Intelligence Workspace
           </h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-            Clone a public GitHub repository from the sidebar or choose a quick template below to start chatting, scanning bugs, and exploring architecture.
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+            Clone a repository from the sidebar or choose a sample repository below to begin.
           </p>
 
-          {/* Quick Demo Templates */}
           {onCloneRepo && (
-            <div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                Quick Clone Templates
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-                {QUICK_REPOS.map((repo) => (
-                  <button
-                    key={repo.name}
-                    onClick={() => onCloneRepo(repo.url)}
-                    disabled={isCloning}
-                    className="hero-feature-pill"
-                    style={{ textAlign: 'left', cursor: isCloning ? 'not-allowed' : 'pointer', border: '1px solid var(--border-color)', width: '100%' }}
-                  >
-                    <div className="hero-pill-icon" style={{ background: 'rgba(88, 166, 255, 0.12)', color: 'var(--accent-blue)' }}>
-                      <DownloadCloud size={16} />
-                    </div>
-                    <div>
-                      <div className="hero-pill-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>{repo.name}</span>
-                        <ArrowRight size={12} style={{ color: 'var(--text-muted)' }} />
-                      </div>
-                      <div className="hero-pill-sub">{repo.desc}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+              {QUICK_REPOS.map((repo) => (
+                <button
+                  key={repo.name}
+                  onClick={() => onCloneRepo(repo.url)}
+                  disabled={isCloning}
+                  className="hero-feature-pill"
+                  style={{ cursor: isCloning ? 'not-allowed' : 'pointer', justifyContent: 'space-between', padding: '10px 14px' }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{repo.name}</span>
+                  <ArrowRight size={13} style={{ color: 'var(--text-muted)' }} />
+                </button>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Local Repos Quick Picker if available */}
         {localRepos && localRepos.length > 0 && onSelectRepo && (
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <FolderGit2 size={18} style={{ color: 'var(--accent-green)' }} />
-              <h3 style={{ fontSize: '0.98rem', fontWeight: 600, color: '#fff' }}>
-                Existing Local Repositories
-              </h3>
+          <div className="card" style={{ padding: '16px' }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+              Existing Repositories
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {localRepos.map((r) => (
                 <button
                   key={r.name}
                   onClick={() => onSelectRepo(r)}
                   className="btn btn-outline"
-                  style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
                 >
-                  <GitBranch size={14} style={{ color: '#3fb950' }} />
+                  <GitBranch size={13} />
                   <span>{r.name}</span>
-                  {r.knowledge_base_built && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)' }}>⚡ Ready</span>
-                  )}
                 </button>
               ))}
             </div>
@@ -204,22 +174,19 @@ export default function ChatTab({
   if (!activeRepo.knowledgeBaseBuilt) {
     return (
       <div className="empty-state">
-        <div className="empty-icon" style={{ background: 'rgba(240, 136, 62, 0.15)', border: '1px solid rgba(240, 136, 62, 0.3)' }}>
-          <Zap size={28} style={{ color: 'var(--accent-orange)' }} />
-        </div>
-        <h3 className="empty-title">Knowledge Base Not Built</h3>
-        <p className="empty-desc" style={{ maxWidth: '440px', margin: '0 auto 18px' }}>
-          Build the FAISS vector index for <strong>{activeRepo.name}</strong> to enable grounded RAG chat with exact file citations.
+        <h3 className="empty-title">Repository Not Indexed</h3>
+        <p className="empty-desc" style={{ maxWidth: '400px', margin: '0 auto 16px' }}>
+          Index <strong>{activeRepo.name}</strong> to enable semantic code search and context-aware responses.
         </p>
         {onBuildKb && (
           <button
             onClick={onBuildKb}
             disabled={isBuildingKb}
             className="btn btn-primary"
-            style={{ padding: '10px 24px' }}
+            style={{ padding: '8px 20px' }}
           >
-            {isBuildingKb ? <Loader2 size={16} className="spin-animate" /> : <Zap size={16} />}
-            <span>{isBuildingKb ? 'Indexing Repository...' : 'Build Knowledge Base Now'}</span>
+            {isBuildingKb ? <Loader2 size={14} className="spin-animate" /> : null}
+            <span>{isBuildingKb ? 'Indexing Repository...' : 'Index Codebase'}</span>
           </button>
         )}
       </div>
@@ -231,23 +198,19 @@ export default function ChatTab({
       {/* Top action bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={18} style={{ color: 'var(--accent-blue)' }} />
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Chat with Codebase</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff' }}>Chat</h2>
         </div>
         {messages.length > 0 && (
-          <button onClick={handleClear} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-            <Trash2 size={14} />
-            <span>Clear Chat</span>
+          <button onClick={handleClear} className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>
+            <Trash2 size={12} />
+            <span>Clear</span>
           </button>
         )}
       </div>
 
       {/* Suggested prompts when empty */}
       {messages.length === 0 && (
-        <div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-            💡 Try asking:
-          </div>
+        <div style={{ marginTop: 'auto', marginBottom: '16px' }}>
           <div className="suggestions-grid">
             {SUGGESTIONS.map((q, idx) => (
               <button
@@ -266,35 +229,23 @@ export default function ChatTab({
       <div className="chat-messages">
         {messages.map((msg, index) => (
           <div key={index} className={`chat-msg ${msg.role}`}>
-            <div className="chat-avatar">
-              {msg.role === 'user' ? (
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(88,166,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={18} style={{ color: 'var(--accent-blue)' }} />
-                </div>
-              ) : (
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(188,140,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Bot size={18} style={{ color: 'var(--accent-purple)' }} />
-                </div>
-              )}
-            </div>
             <div className="chat-body">
               <div className="markdown-body">
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
 
-              {/* Referenced Files Badges */}
+              {/* Referenced Files */}
               {msg.sources && msg.sources.length > 0 && (
                 <div className="chat-sources">
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Referenced:</span>
                   {msg.sources.map((src, i) => (
                     <button
                       key={i}
                       onClick={() => onOpenFileInExplorer && onOpenFileInExplorer(src)}
                       className="source-badge"
-                      style={{ border: 'none', cursor: 'pointer' }}
+                      style={{ cursor: 'pointer' }}
                       title={`Open ${src}`}
                     >
-                      <FileText size={12} />
+                      <FileText size={11} />
                       <span>{src}</span>
                     </button>
                   ))}
@@ -306,12 +257,9 @@ export default function ChatTab({
 
         {loading && (
           <div className="chat-msg assistant">
-            <div className="chat-avatar">
-              <Bot size={22} style={{ color: 'var(--accent-purple)' }} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
-              <Loader2 size={16} className="spin-animate" />
-              <span>Analyzing codebase and retrieving context...</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.86rem' }}>
+              <Loader2 size={14} className="spin-animate" />
+              <span>Analyzing code...</span>
             </div>
           </div>
         )}
@@ -330,7 +278,7 @@ export default function ChatTab({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything about the codebase (e.g. How does auth work? Explain architecture)..."
+          placeholder="Ask a question about the code..."
           className="chat-input"
           disabled={loading}
         />
@@ -338,9 +286,9 @@ export default function ChatTab({
           type="submit"
           disabled={loading || !input.trim()}
           className="btn btn-primary"
-          style={{ padding: '8px 16px', borderRadius: 'var(--radius-lg)' }}
+          style={{ padding: '7px 14px', borderRadius: 'var(--radius-xl)' }}
         >
-          <Send size={16} />
+          <Send size={14} />
           <span>Send</span>
         </button>
       </form>
