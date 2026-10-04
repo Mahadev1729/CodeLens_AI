@@ -120,27 +120,38 @@ export default function ChatTab({
 
   if (!activeRepo) {
     return (
-      <div style={{ maxWidth: '700px', margin: '40px auto 0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div className="card" style={{ padding: '32px 24px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+      <div style={{ maxWidth: '720px', margin: '30px auto 0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="card" style={{ padding: '36px 28px', textAlign: 'center', background: '#121214', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
             Code Intelligence Workspace
           </h2>
-          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.5 }}>
-            Clone a repository from the sidebar or choose a sample repository below to begin.
+          <p style={{ fontSize: '0.88rem', color: '#a1a1aa', maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.5 }}>
+            Clone a public GitHub repository from the sidebar or click a sample repository below to start exploring.
           </p>
 
           {onCloneRepo && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
               {QUICK_REPOS.map((repo) => (
                 <button
                   key={repo.name}
                   onClick={() => onCloneRepo(repo.url)}
                   disabled={isCloning}
                   className="hero-feature-pill"
-                  style={{ cursor: isCloning ? 'not-allowed' : 'pointer', justifyContent: 'space-between', padding: '10px 14px' }}
+                  style={{
+                    cursor: isCloning ? 'not-allowed' : 'pointer',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    borderRadius: 'var(--radius-md)',
+                    color: '#ffffff',
+                  }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{repo.name}</span>
-                  <ArrowRight size={13} style={{ color: 'var(--text-muted)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <DownloadCloud size={16} style={{ color: '#ffffff' }} />
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#ffffff' }}>{repo.name}</span>
+                  </div>
+                  <ArrowRight size={14} style={{ color: '#a1a1aa' }} />
                 </button>
               ))}
             </div>
@@ -148,19 +159,19 @@ export default function ChatTab({
         </div>
 
         {localRepos && localRepos.length > 0 && onSelectRepo && (
-          <div className="card" style={{ padding: '16px' }}>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
-              Existing Repositories
+          <div className="card" style={{ padding: '20px', background: '#121214', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
+            <div style={{ fontSize: '0.78rem', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', fontWeight: 600 }}>
+              Available Local Repositories
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {localRepos.map((r) => (
                 <button
                   key={r.name}
                   onClick={() => onSelectRepo(r)}
-                  className="btn btn-outline"
-                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                  className="btn btn-secondary"
+                  style={{ padding: '8px 14px', fontSize: '0.84rem', color: '#ffffff', background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 >
-                  <GitBranch size={13} />
+                  <GitBranch size={14} style={{ color: '#ffffff' }} />
                   <span>{r.name}</span>
                 </button>
               ))}

@@ -53,6 +53,11 @@
   padding: 0;
 }
 
+button {
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
@@ -60,6 +65,24 @@ body {
   line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+.hero-feature-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.hero-feature-pill:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 /* Custom Scrollbars */

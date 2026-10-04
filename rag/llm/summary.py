@@ -17,34 +17,25 @@ Sample Files (first few files with content):
 Generate a detailed summary with these exact sections:
 
 ## Project Overview
-[What this project does, its purpose and goals]
+[What this project does, its primary purpose and core features]
 
-## Folder Structure
-[Explain the directory layout and organization]
+## Folder Organization
+[High-level directory layout and purpose of key folders]
 
-## Tech Stack
-[All technologies, frameworks, libraries detected]
+## Core Technologies & Dependencies
+[Key libraries, frameworks, and tools used in the project]
 
-## Entry Point
-[How the application starts, main entry files]
+## Entry Points
+[How the application starts, main entry files and configurations]
 
-## Architecture
-[Overall architecture pattern - MVC, microservices, monolith, etc.]
+## Architecture Pattern
+[Overall architecture pattern and system design]
 
-## Authentication
-[Authentication mechanism if present, or "Not detected"]
+## Key Modules & Components
+[Key classes, modules, or services and their roles]
 
-## Database
-[Database technology and schema approach, or "Not detected"]
-
-## APIs
-[API endpoints or interfaces exposed, or "Not detected"]
-
-## Major Components
-[Key classes, modules, or components and their roles]
-
-## Suggestions
-[3-5 concrete improvement suggestions based on code quality, architecture, or missing features]"""
+## Key Insights & Suggestions
+[3-5 practical takeaways or improvement suggestions]"""
 
 
 def generate_summary(
