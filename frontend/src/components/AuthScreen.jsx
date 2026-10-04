@@ -3,6 +3,8 @@ import {
   Brain, 
   User, 
   Lock, 
+  Eye,
+  EyeOff,
   ArrowRight, 
   AlertCircle, 
   CheckCircle, 
@@ -43,6 +45,7 @@ export default function AuthScreen({ onAuthSuccess }) {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -356,14 +359,24 @@ export default function AuthScreen({ onAuthSuccess }) {
                 <div className="auth-input-wrapper">
                   <Lock size={14} className="auth-field-icon" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     className="input-field auth-input"
+                    style={{ paddingRight: '36px' }}
                     autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="auth-password-toggle"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
                 </div>
               </div>
 

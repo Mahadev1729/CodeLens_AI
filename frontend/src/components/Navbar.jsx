@@ -3,6 +3,8 @@ import {
   Brain, 
   GitBranch, 
   Key, 
+  Eye,
+  EyeOff,
   User, 
   LogOut, 
   CheckCircle2, 
@@ -27,6 +29,7 @@ export default function Navbar({
 }) {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKey, setTempKey] = useState(groqApiKey || '');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleSaveKey = (e) => {
@@ -241,14 +244,26 @@ export default function Navbar({
             <form onSubmit={handleSaveKey} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <label className="input-label">API Key</label>
-                <input
-                  type="password"
-                  value={tempKey}
-                  onChange={(e) => setTempKey(e.target.value)}
-                  placeholder="gsk_..."
-                  className="input-field"
-                  autoComplete="off"
-                />
+                <div className="auth-input-wrapper">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={tempKey}
+                    onChange={(e) => setTempKey(e.target.value)}
+                    placeholder="gsk_..."
+                    className="input-field auth-input"
+                    style={{ paddingLeft: '12px', paddingRight: '36px' }}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="auth-password-toggle"
+                    aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                    title={showApiKey ? 'Hide API key' : 'Show API key'}
+                  >
+                    {showApiKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
